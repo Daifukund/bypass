@@ -3,9 +3,11 @@
  * Centralized prompt management for all AI interactions
  */
 
-import type { EmailGenerationParams } from '@/lib/openai/services/email-generation';
-import { LINKEDIN_GEO_REGIONS } from './linkedin-regions';
-
+import type { EmailGenerationParams } from "@/lib/openai/services/email-generation";
+import {
+  LINKEDIN_GEO_REGIONS,
+  getLinkedInRegionCode,
+} from "./linkedin-regions";
 
 // Types for better type safety
 interface SearchCriteria {
@@ -21,36 +23,37 @@ interface SearchCriteria {
   excludeCompanies?: string[];
 }
 
-
 /**
-* Helper function to safely format keywords
-*/
+ * Helper function to safely format keywords
+ */
 const formatKeywords = (keywords: any): string => {
-  if (!keywords) return 'Not specified';
-  if (Array.isArray(keywords)) return keywords.join(', ');
-  if (typeof keywords === 'string') return keywords;
-  return 'Not specified';
+  if (!keywords) return "Not specified";
+  if (Array.isArray(keywords)) return keywords.join(", ");
+  if (typeof keywords === "string") return keywords;
+  return "Not specified";
 };
 
 /**
-* All OpenAI prompts used in the application
-*/
+ * All OpenAI prompts used in the application
+ */
 export const OPENAI_PROMPTS = {
   /**
    * Company Discovery Prompt
    * Used for finding companies that match job search criteria
    */
-  COMPANY_DISCOVERY: (criteria: SearchCriteria): string => `You are an AI assistant helping job seekers discover companies that best match their search criteria. The user has filled in the following preferences (some fields may be empty):
-• Job Title: ${criteria.jobTitle || 'Not specified'}
-• Location: ${criteria.location || 'Not specified'}
-• Job Type: ${criteria.jobType || 'Not specified'}
-• Industry: ${criteria.industry || 'Not specified'}
-• Company Size: ${criteria.companySize || 'Not specified'}
-• Experience Level: ${criteria.experienceLevel || 'Not specified'}
+  COMPANY_DISCOVERY: (
+    criteria: SearchCriteria,
+  ): string => `You are an AI assistant helping job seekers discover companies that best match their search criteria. The user has filled in the following preferences (some fields may be empty):
+• Job Title: ${criteria.jobTitle || "Not specified"}
+• Location: ${criteria.location || "Not specified"}
+• Job Type: ${criteria.jobType || "Not specified"}
+• Industry: ${criteria.industry || "Not specified"}
+• Company Size: ${criteria.companySize || "Not specified"}
+• Experience Level: ${criteria.experienceLevel || "Not specified"}
 • Keywords: ${formatKeywords(criteria.keywords)}
-• Preferred Language: ${criteria.language || 'Not specified'}
-• Expected Salary: ${criteria.expectedSalary || 'Not specified'}
-• Exclude Companies: ${criteria.excludeCompanies || 'Not specified'}
+• Preferred Language: ${criteria.language || "Not specified"}
+• Expected Salary: ${criteria.expectedSalary || "Not specified"}
+• Exclude Companies: ${criteria.excludeCompanies || "Not specified"}
 
 Based on the above inputs, return a list of 10 companies that are actively hiring or growing, and match the job seeker's criteria. Use reliable and up-to-date information.
 
@@ -83,7 +86,11 @@ Return ONLY the JSON array, nothing else.`,
    * Employee Discovery Prompt
    * Used for finding employees at target companies
    */
-  EMPLOYEE_DISCOVERY: (criteria: { companyName: string; jobTitle: string; location?: string }): string => `You are an expert talent sourcing assistant. Find real employees currently working at "${criteria.companyName}" who would be relevant contacts for someone applying for a "${criteria.jobTitle}" position${criteria.location ? ` in ${criteria.location}` : ""}.
+  EMPLOYEE_DISCOVERY: (criteria: {
+    companyName: string;
+    jobTitle: string;
+    location?: string;
+  }): string => `You are an expert talent sourcing assistant. Find real employees currently working at "${criteria.companyName}" who would be relevant contacts for someone applying for a "${criteria.jobTitle}" position${criteria.location ? ` in ${criteria.location}` : ""}.
 
 🎯 SEARCH OBJECTIVES:
 Find 4-8 current employees who are:
@@ -144,13 +151,18 @@ Search now for current employees at "${criteria.companyName}" relevant to "${cri
    * Email Address Generation Prompt
    * Used for guessing professional email addresses
    */
-  EMAIL_ADDRESS_GENERATION: (fullName: string, companyName: string, jobTitle?: string, location?: string): string => `You are an assistant that specializes in predicting professional email addresses based on standard corporate naming conventions.
+  EMAIL_ADDRESS_GENERATION: (
+    fullName: string,
+    companyName: string,
+    jobTitle?: string,
+    location?: string,
+  ): string => `You are an assistant that specializes in predicting professional email addresses based on standard corporate naming conventions.
 
 Use the following input:
 • Full Name: ${fullName}
 • Company name: ${companyName}
-${jobTitle ? `• Job Title: ${jobTitle}` : ''}
-${location ? `• Location: ${location}` : ''}
+${jobTitle ? `• Job Title: ${jobTitle}` : ""}
+${location ? `• Location: ${location}` : ""}
 
 Your task is to generate the most likely professional email address for this person at the given company.
 
@@ -178,61 +190,62 @@ Return ONLY the JSON object, nothing else.`,
    */
   EMAIL_CONTENT_GENERATION: (params: EmailGenerationParams): string => {
     const userInfo = params.userProfile;
-    
+
     // ✅ Better fallback handling with actual user data
-    const senderName = userInfo?.firstName && userInfo?.lastName 
-      ? `${userInfo.firstName} ${userInfo.lastName}` 
-      : 'Student'; // Don't use placeholder brackets
-    
-    const university = userInfo?.university || 'my university';
-    const studyLevel = userInfo?.studyLevel || 'student';
-    const fieldOfStudy = userInfo?.fieldOfStudy || 'my field of study';
-    const phone = userInfo?.phone || '';
-    const linkedin = userInfo?.linkedin || '';
+    const senderName =
+      userInfo?.firstName && userInfo?.lastName
+        ? `${userInfo.firstName} ${userInfo.lastName}`
+        : "Student"; // Don't use placeholder brackets
+
+    const university = userInfo?.university || "my university";
+    const studyLevel = userInfo?.studyLevel || "student";
+    const fieldOfStudy = userInfo?.fieldOfStudy || "my field of study";
+    const phone = userInfo?.phone || "";
+    const linkedin = userInfo?.linkedin || "";
 
     // Language-specific content
     const getLanguageSpecificContent = (language: string) => {
       switch (language.toLowerCase()) {
-        case 'french':
-        case 'français':
+        case "french":
+        case "français":
           return {
-            closing: 'Cordialement',
-            instructions: 'Use proper French accents (é, è, à, ç, etc.)',
-            fallbackSubject: 'Demande d\'échange professionnel'
+            closing: "Cordialement",
+            instructions: "Use proper French accents (é, è, à, ç, etc.)",
+            fallbackSubject: "Demande d'échange professionnel",
           };
-        case 'german':
-        case 'deutsch':
+        case "german":
+        case "deutsch":
           return {
-            closing: 'Mit freundlichen Grüßen',
-            instructions: 'Use proper German formatting',
-            fallbackSubject: 'Anfrage für beruflichen Austausch'
+            closing: "Mit freundlichen Grüßen",
+            instructions: "Use proper German formatting",
+            fallbackSubject: "Anfrage für beruflichen Austausch",
           };
-        case 'spanish':
-        case 'español':
+        case "spanish":
+        case "español":
           return {
-            closing: 'Saludos cordiales',
-            instructions: 'Use proper Spanish formatting',
-            fallbackSubject: 'Solicitud de intercambio profesional'
+            closing: "Saludos cordiales",
+            instructions: "Use proper Spanish formatting",
+            fallbackSubject: "Solicitud de intercambio profesional",
           };
-        case 'italian':
-        case 'italiano':
+        case "italian":
+        case "italiano":
           return {
-            closing: 'Cordiali saluti',
-            instructions: 'Use proper Italian formatting',
-            fallbackSubject: 'Richiesta di scambio professionale'
+            closing: "Cordiali saluti",
+            instructions: "Use proper Italian formatting",
+            fallbackSubject: "Richiesta di scambio professionale",
           };
-        case 'portuguese':
-        case 'português':
+        case "portuguese":
+        case "português":
           return {
-            closing: 'Atenciosamente',
-            instructions: 'Use proper Portuguese formatting',
-            fallbackSubject: 'Solicitação de intercâmbio profissional'
+            closing: "Atenciosamente",
+            instructions: "Use proper Portuguese formatting",
+            fallbackSubject: "Solicitação de intercâmbio profissional",
           };
         default: // English
           return {
-            closing: 'Best regards',
-            instructions: 'Use professional English formatting',
-            fallbackSubject: 'Request for professional exchange'
+            closing: "Best regards",
+            instructions: "Use professional English formatting",
+            fallbackSubject: "Request for professional exchange",
           };
       }
     };
@@ -242,7 +255,7 @@ Return ONLY the JSON object, nothing else.`,
     return `You are a professional job search coach. Write a short and personalized email for the following context:
 
 - Sender: ${senderName}, a ${studyLevel} student in ${fieldOfStudy} at ${university}
-- Receiver: ${params.contactName}, ${params.jobTitle} at ${params.companyName}${params.location ? ` in ${params.location}` : ''}
+- Receiver: ${params.contactName}, ${params.jobTitle} at ${params.companyName}${params.location ? ` in ${params.location}` : ""}
 - Relationship: no prior contact
 - Intent: ${params.emailType} (Networking / Cold Application / Referral Request / Coffee Chat)
 - Language: ${params.language} (WRITE THE ENTIRE EMAIL IN ${params.language.toUpperCase()})
@@ -251,7 +264,7 @@ SENDER INFORMATION TO USE:
 - Name: ${senderName}
 - University: ${university}
 - Study Level: ${studyLevel}
-- Field of Study: ${fieldOfStudy}${phone ? `\n- Phone: ${phone}` : ''}${linkedin ? `\n- LinkedIn: ${linkedin}` : ''}
+- Field of Study: ${fieldOfStudy}${phone ? `\n- Phone: ${phone}` : ""}${linkedin ? `\n- LinkedIn: ${linkedin}` : ""}
 
 CRITICAL INSTRUCTIONS:
 1. WRITE THE ENTIRE EMAIL IN ${params.language.toUpperCase()} LANGUAGE
@@ -274,7 +287,7 @@ Subject: [Your subject line here in ${params.language}]
 [Email body content here in ${params.language}]
 
 ${langContent.closing},
-${senderName}${phone ? `\nPhone: ${phone}` : ''}
+${senderName}${phone ? `\nPhone: ${phone}` : ""}
 
 CRITICAL: 
 - Use REAL information, not placeholders
@@ -289,14 +302,18 @@ Return ONLY the email in the exact format above.`;
    * LinkedIn URL Generation Prompt
    * Used for generating LinkedIn search URLs
    */
-  LINKEDIN_URL_GENERATION: (companyName: string, jobTitle: string, location?: string): string => {
+  LINKEDIN_URL_GENERATION: (
+    companyName: string,
+    jobTitle: string,
+    location?: string,
+  ): string => {
     // Get the region code for the location
     const regionCode = location ? getLinkedInRegionCode(location) : null;
-    
+
     let prompt = `Generate a LinkedIn People search URL for finding employees at a specific company.
 
 Company: ${companyName}
-Job Title/Keywords: ${jobTitle}${location ? `\nLocation: ${location}` : ''}
+Job Title/Keywords: ${jobTitle}${location ? `\nLocation: ${location}` : ""}
 
 Return a direct LinkedIn URL in this EXACT format:
 https://www.linkedin.com/company/[company-identifier]/people/?keywords=[relevant-keywords]`;
@@ -323,7 +340,10 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
    * LinkedIn Paste Analysis Prompt
    * Used for extracting employee data from pasted LinkedIn content
    */
-  LINKEDIN_PASTE_ANALYSIS: (content: string, companyName: string): string => `You are a LinkedIn content analyzer. Extract employee information from the following pasted LinkedIn search results.
+  LINKEDIN_PASTE_ANALYSIS: (
+    content: string,
+    companyName: string,
+  ): string => `You are a LinkedIn content analyzer. Extract employee information from the following pasted LinkedIn search results.
 
 Company: ${companyName}
 
@@ -416,11 +436,11 @@ Generate the subject:`,
     };
   }): string => {
     const userInfo = params.userProfile;
-    const university = userInfo?.university || 'mon université';
-    const studyLevel = userInfo?.studyLevel || 'étudiant';
-    const fieldOfStudy = userInfo?.fieldOfStudy || 'Finance';
-    const phone = userInfo?.phone || '';
-    const linkedin = userInfo?.linkedin || '';
+    const university = userInfo?.university || "mon université";
+    const studyLevel = userInfo?.studyLevel || "étudiant";
+    const fieldOfStudy = userInfo?.fieldOfStudy || "Finance";
+    const phone = userInfo?.phone || "";
+    const linkedin = userInfo?.linkedin || "";
 
     return `Write a professional email body in French for:
 
@@ -432,65 +452,68 @@ Requirements:
 - 2-3 short paragraphs
 - Professional but warm tone
 - End with "Cordialement, ${params.senderName}"
-${phone ? `- Include phone: ${phone}` : ''}
-${linkedin ? `- Include LinkedIn: ${linkedin}` : ''}
+${phone ? `- Include phone: ${phone}` : ""}
+${linkedin ? `- Include LinkedIn: ${linkedin}` : ""}
 
 Write the email body:`;
-  }
+  },
 };
 
 /**
-* System prompts for different AI interaction types
-*/
+ * System prompts for different AI interaction types
+ */
 export const SYSTEM_PROMPTS = {
-  JSON_ONLY: "You are a helpful assistant that returns ONLY valid JSON arrays. No explanations, no markdown, no additional text.",
+  JSON_ONLY:
+    "You are a helpful assistant that returns ONLY valid JSON arrays. No explanations, no markdown, no additional text.",
   JSON_OBJECT_ONLY: "You are a helpful assistant that returns only valid JSON.",
-  PROFESSIONAL_COACH: "You are a professional job search coach helping students and early-career professionals.",
-  TALENT_SOURCER: "You are an expert talent sourcing assistant with deep knowledge of professional networking.",
+  PROFESSIONAL_COACH:
+    "You are a professional job search coach helping students and early-career professionals.",
+  TALENT_SOURCER:
+    "You are an expert talent sourcing assistant with deep knowledge of professional networking.",
 };
 
 /**
-* Email types for email generation
-*/
+ * Email types for email generation
+ */
 export const EMAIL_TYPES = {
-  NETWORKING: 'Networking',
-  COLD_APPLICATION: 'Cold Application',
-  REFERRAL_REQUEST: 'Referral Request',
-  COFFEE_CHAT: 'Coffee Chat',
+  NETWORKING: "Networking",
+  COLD_APPLICATION: "Cold Application",
+  REFERRAL_REQUEST: "Referral Request",
+  COFFEE_CHAT: "Coffee Chat",
 } as const;
 
 /**
-* Relevance score options
-*/
+ * Relevance score options
+ */
 export const RELEVANCE_SCORES = {
-  PERFECT_MATCH: 'Perfect Match',
-  GOOD_MATCH: 'Good Match',
-  POTENTIAL_MATCH: 'Potential Match',
+  PERFECT_MATCH: "Perfect Match",
+  GOOD_MATCH: "Good Match",
+  POTENTIAL_MATCH: "Potential Match",
 } as const;
 
 /**
-* Default OpenAI model configurations
-*/
+ * Default OpenAI model configurations
+ */
 export const OPENAI_CONFIG = {
   MODELS: {
-    WEB_SEARCH: 'gpt-4.1',
-    STANDARD: 'gpt-4o',
+    WEB_SEARCH: "gpt-4.1",
+    STANDARD: "gpt-4o",
   },
   TEMPERATURE: {
-    FACTUAL: 0.3,      // For email guessing, data extraction
-    BALANCED: 0.7,     // For company/employee search
-    CREATIVE: 0.8,     // For email content generation
+    FACTUAL: 0.3, // For email guessing, data extraction
+    BALANCED: 0.7, // For company/employee search
+    CREATIVE: 0.8, // For email content generation
   },
   MAX_TOKENS: {
-    SHORT: 200,        // Email address generation
-    MEDIUM: 500,       // Email content generation
-    LONG: 1500,        // Employee search
-    EXTRA_LONG: 2000,  // Company search
+    SHORT: 200, // Email address generation
+    MEDIUM: 500, // Email content generation
+    LONG: 1500, // Employee search
+    EXTRA_LONG: 2000, // Company search
   },
   SEARCH_CONTEXT_SIZE: {
-    LOW: 'low' as const,
-    MEDIUM: 'medium' as const,
-    HIGH: 'high' as const,
+    LOW: "low" as const,
+    MEDIUM: "medium" as const,
+    HIGH: "high" as const,
   },
 } as const;
 
