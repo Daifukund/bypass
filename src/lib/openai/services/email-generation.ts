@@ -3,11 +3,11 @@
  * Uses OpenAI Standard to create personalized email content
  */
 
-import { openai } from '@/lib/openai';
-import { OPENAI_PROMPTS, OPENAI_CONFIG } from '@/constants/prompts';
-import { parseEmailContent } from '@/lib/openai/utils';
-import { EmailContent } from '@/lib/openai/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { openai } from "@/lib/openai";
+import { OPENAI_PROMPTS, OPENAI_CONFIG } from "@/constants/prompts";
+import { parseEmailContent } from "@/lib/openai/utils";
+import { EmailContent, EmailType } from "@/lib/openai/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Types for email generation
 export interface EmailGenerationParams {
@@ -15,7 +15,7 @@ export interface EmailGenerationParams {
   jobTitle: string;
   companyName: string;
   location?: string;
-  emailType: string;
+  emailType: EmailType;
   language: string;
   userProfile?: {
     firstName?: string;
@@ -40,13 +40,13 @@ export interface CreditCheckResult {
  * This creates personalized email content without web search
  */
 export async function generateEmailContent(
-  params: EmailGenerationParams
+  params: EmailGenerationParams,
 ): Promise<EmailContent> {
   try {
-    console.log('✍️ Generating email content for:', params);
+    console.log("✍️ Generating email content for:", params);
 
     if (!openai) {
-      throw new Error('OpenAI client not initialized');
+      throw new Error("OpenAI client not initialized");
     }
 
     const prompt = OPENAI_PROMPTS.EMAIL_CONTENT_GENERATION(params);
@@ -56,13 +56,14 @@ export async function generateEmailContent(
       model: OPENAI_CONFIG.MODELS.STANDARD,
       messages: [
         {
-          role: 'system',
-          content: 'You are a professional job search coach helping students and early-career professionals.'
+          role: "system",
+          content:
+            "You are a professional job search coach helping students and early-career professionals.",
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
       temperature: OPENAI_CONFIG.TEMPERATURE.CREATIVE,
       max_tokens: OPENAI_CONFIG.MAX_TOKENS.MEDIUM,
@@ -70,14 +71,14 @@ export async function generateEmailContent(
 
     const content = completion.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('No response from OpenAI');
+      throw new Error("No response from OpenAI");
     }
 
-    console.log('📝 Raw email content:', content);
+    console.log("📝 Raw email content:", content);
 
     // Parse subject and body from the response
     const parsedContent = parseEmailContent(content);
-    
+
     const emailContent: EmailContent = {
       subject: parsedContent.subject,
       body: parsedContent.body,
@@ -85,44 +86,47 @@ export async function generateEmailContent(
       language: params.language,
     };
 
-    console.log('✅ Generated email content:', emailContent);
+    console.log("✅ Generated email content:", emailContent);
     return emailContent;
-
   } catch (error) {
-    console.error('❌ Error generating email content:', error);
-    throw new Error(`Failed to generate email content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("❌ Error generating email content:", error);
+    throw new Error(
+      `Failed to generate email content: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
 /**
  * Check user's credit status
  */
-export async function checkUserCredits(userId: string, supabase: SupabaseClient): Promise<CreditCheckResult> {
+export async function checkUserCredits(
+  userId: string,
+  supabase: SupabaseClient,
+): Promise<CreditCheckResult> {
   try {
     const { data: user, error } = await supabase
-      .from('users')
-      .select('email_credits, plan')
-      .eq('id', userId)
+      .from("users")
+      .select("email_credits, plan")
+      .eq("id", userId)
       .single();
 
     if (error) {
-      console.error('❌ Error checking user credits:', error);
-      throw new Error('Failed to check user credits');
+      console.error("❌ Error checking user credits:", error);
+      throw new Error("Failed to check user credits");
     }
 
     const creditsUsed = user.email_credits || 0;
-    const plan = user.plan || 'freemium';
-    const isAtLimit = plan === 'freemium' && creditsUsed >= 5;
+    const plan = user.plan || "freemium";
+    const isAtLimit = plan === "freemium" && creditsUsed >= 5;
 
     return {
-      canGenerate: plan === 'premium' || creditsUsed < 5,
+      canGenerate: plan === "premium" || creditsUsed < 5,
       creditsUsed,
       plan,
       isAtLimit,
     };
-
   } catch (error) {
-    console.error('❌ Error checking credits:', error);
+    console.error("❌ Error checking credits:", error);
     throw error;
   }
 }
@@ -130,40 +134,45 @@ export async function checkUserCredits(userId: string, supabase: SupabaseClient)
 /**
  * Increment user's email credits
  */
-export async function incrementUserCredits(userId: string, supabase: SupabaseClient): Promise<void> {
+export async function incrementUserCredits(
+  userId: string,
+  supabase: SupabaseClient,
+): Promise<void> {
   try {
     // Get current credits
     const { data: user, error: fetchError } = await supabase
-      .from('users')
-      .select('email_credits')
-      .eq('id', userId)
+      .from("users")
+      .select("email_credits")
+      .eq("id", userId)
       .single();
 
     if (fetchError) {
-      console.error('❌ Error fetching user credits:', fetchError);
-      throw new Error('Failed to fetch user credits');
+      console.error("❌ Error fetching user credits:", fetchError);
+      throw new Error("Failed to fetch user credits");
     }
 
     const currentCredits = user.email_credits || 0;
-    
+
     // Increment credits
     const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
+      .from("users")
+      .update({
         email_credits: currentCredits + 1,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', userId);
+      .eq("id", userId);
 
     if (updateError) {
-      console.error('❌ Error updating user credits:', updateError);
-      throw new Error('Failed to update user credits');
+      console.error("❌ Error updating user credits:", updateError);
+      throw new Error("Failed to update user credits");
     }
 
-    console.log('✅ Incremented user credits:', { userId, newCredits: currentCredits + 1 });
-
+    console.log("✅ Incremented user credits:", {
+      userId,
+      newCredits: currentCredits + 1,
+    });
   } catch (error) {
-    console.error('❌ Error incrementing credits:', error);
+    console.error("❌ Error incrementing credits:", error);
     throw error;
   }
 }
@@ -180,37 +189,34 @@ export async function saveEmailGeneration(
   emailType: string,
   supabase: SupabaseClient,
   generatedEmail?: string,
-  generatedSubject?: string
+  generatedSubject?: string,
 ): Promise<string> {
   try {
     const emailGenerationId = crypto.randomUUID();
-    
-    const { error } = await supabase
-      .from('email_generation')
-      .insert({
-        id: emailGenerationId,
-        user_id: userId,
-        company_id: companyId,
-        employee_id: employeeId,
-        emailAddress: emailAddress,
-        confidenceScore: Math.round(confidenceScore * 100),
-        emailType: emailType,
-        generatedEmail: generatedEmail,
-        generatedSubject: generatedSubject,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      });
+
+    const { error } = await supabase.from("email_generation").insert({
+      id: emailGenerationId,
+      user_id: userId,
+      company_id: companyId,
+      employee_id: employeeId,
+      emailAddress: emailAddress,
+      confidenceScore: Math.round(confidenceScore * 100),
+      emailType: emailType,
+      generatedEmail: generatedEmail,
+      generatedSubject: generatedSubject,
+      status: "pending",
+      created_at: new Date().toISOString(),
+    });
 
     if (error) {
-      console.error('❌ Error saving email generation:', error);
-      throw new Error('Failed to save email generation');
+      console.error("❌ Error saving email generation:", error);
+      throw new Error("Failed to save email generation");
     }
 
-    console.log('✅ Saved email generation:', emailGenerationId);
+    console.log("✅ Saved email generation:", emailGenerationId);
     return emailGenerationId;
-
   } catch (error) {
-    console.error('❌ Error saving email generation:', error);
+    console.error("❌ Error saving email generation:", error);
     throw error;
   }
 }
