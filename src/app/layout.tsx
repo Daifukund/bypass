@@ -17,13 +17,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SAAS Bypass",
   description: "Your SAAS application",
-  charset: 'utf-8',
 };
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Search', href: '/criteria', icon: Search },
-  { name: 'Find Email', href: '/find-email', icon: Mail },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Search", href: "/criteria", icon: Search },
+  { name: "Find Email", href: "/find-email", icon: Mail },
 ];
 
 export default function RootLayout({
@@ -39,9 +38,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
-        <SupabaseProvider>
-          {children}
-        </SupabaseProvider>
+        <SupabaseProvider>{children}</SupabaseProvider>
       </body>
     </html>
   );
