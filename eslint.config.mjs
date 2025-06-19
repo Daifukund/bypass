@@ -13,17 +13,6 @@ export default [
   // Extend Next.js and TypeScript compatibility
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 
-  // Tailwind plugin
-  {
-    plugins: {
-      tailwindcss: require("eslint-plugin-tailwindcss"),
-    },
-    rules: {
-      // Optional: disable overly strict Tailwind rules
-      "tailwindcss/no-custom-classname": "off",
-    },
-  },
-
   // Prettier override to disable ESLint formatting conflicts
   {
     name: "Prettier",
