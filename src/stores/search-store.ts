@@ -1,6 +1,7 @@
 // src/stores/search-store.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { Company, Employee } from "@/lib/openai/types";
 
 type Criteria = {
   jobTitle: string;
@@ -16,25 +17,6 @@ type Criteria = {
   excludeCompanies?: string;
 };
 
-type Company = {
-  id: string;
-  name: string;
-  logoUrl: string;
-  description: string;
-  relevanceScore: string;
-  location: string;
-  url?: string;
-};
-
-type Employee = {
-  id: string;
-  name: string;
-  title: string;
-  location: string;
-  linkedinUrl?: string;
-  relevanceScore: string;
-};
-
 type SearchStore = {
   criteria: Criteria | null;
   companies: Company[];
@@ -44,7 +26,7 @@ type SearchStore = {
   generatedEmail: string;
   searchSessionId: string | null;
   linkedinPeopleSearchUrl: string | null;
-  searchMode: 'standard' | 'websearch';
+  searchMode: "standard" | "websearch";
 
   setCriteria: (c: Criteria) => void;
   setCompanies: (c: Company[]) => void;
@@ -55,7 +37,7 @@ type SearchStore = {
   startNewSearch: () => void;
   reset: () => void;
   setLinkedinPeopleSearchUrl: (url: string | null) => void;
-  setSearchMode: (mode: 'standard' | 'websearch') => void;
+  setSearchMode: (mode: "standard" | "websearch") => void;
   addManualCompany: (companyName: string) => void;
 };
 
@@ -70,19 +52,22 @@ export const useSearchStore = create<SearchStore>()(
       generatedEmail: "",
       searchSessionId: null,
       linkedinPeopleSearchUrl: null,
-      searchMode: 'standard',
+      searchMode: "standard",
 
       setCriteria: (c) => {
         // Generate new session ID when criteria changes significantly
         const currentCriteria = get().criteria;
-        const isNewSearch = !currentCriteria || 
+        const isNewSearch =
+          !currentCriteria ||
           currentCriteria.jobTitle !== c.jobTitle ||
           currentCriteria.location !== c.location ||
           currentCriteria.industry !== c.industry;
-        
-        set({ 
+
+        set({
           criteria: c,
-          searchSessionId: isNewSearch ? Date.now().toString() : get().searchSessionId,
+          searchSessionId: isNewSearch
+            ? Date.now().toString()
+            : get().searchSessionId,
           // Clear downstream data when starting new search
           ...(isNewSearch && {
             companies: [],
@@ -90,68 +75,74 @@ export const useSearchStore = create<SearchStore>()(
             employees: [],
             selectedEmployee: null,
             generatedEmail: "",
-            linkedinPeopleSearchUrl: null
-          })
+            linkedinPeopleSearchUrl: null,
+          }),
         });
       },
-      
+
       setCompanies: (c) => set({ companies: c }),
       setSelectedCompany: (c) => set({ selectedCompany: c }),
-      setEmployees: (employees, linkedinUrl) => set({ 
-        employees, 
-        linkedinPeopleSearchUrl: linkedinUrl || null 
-      }),
+      setEmployees: (employees, linkedinUrl) =>
+        set({
+          employees,
+          linkedinPeopleSearchUrl: linkedinUrl || null,
+        }),
       setSelectedEmployee: (e) => set({ selectedEmployee: e }),
       setGeneratedEmail: (email) => set({ generatedEmail: email }),
-      
+
       setSearchMode: (mode) => set({ searchMode: mode }),
 
       addManualCompany: (companyName: string) => {
         const currentCompanies = get().companies;
         const criteria = get().criteria;
-        
+
         const newCompany: Company = {
           id: `manual-${Date.now()}`,
           name: companyName,
-          logoUrl: '',
-          description: 'Manually added company',
-          relevanceScore: 'Manual Entry',
-          location: criteria?.location || '',
-          url: ''
+          logo: "",
+          description: "Manually added company",
+          estimatedEmployees: "Unknown",
+          relevanceScore: "Good Match",
+          location: criteria?.location || "",
+          url: "",
+          source: "Manual Entry",
         };
-        
+
         // Add to the beginning of the companies array
         set({ companies: [newCompany, ...currentCompanies] });
       },
 
-      startNewSearch: () => set({
-        criteria: null,
-        companies: [],
-        selectedCompany: null,
-        employees: [],
-        selectedEmployee: null,
-        generatedEmail: "",
-        searchSessionId: null,
-        linkedinPeopleSearchUrl: null,
-        searchMode: 'standard',
-      }),
-      
-      reset: () => set({
-        criteria: null,
-        companies: [],
-        selectedCompany: null,
-        employees: [],
-        selectedEmployee: null,
-        generatedEmail: "",
-        searchSessionId: null,
-        linkedinPeopleSearchUrl: null,
-        searchMode: 'standard',
-      }),
+      startNewSearch: () =>
+        set({
+          criteria: null,
+          companies: [],
+          selectedCompany: null,
+          employees: [],
+          selectedEmployee: null,
+          generatedEmail: "",
+          searchSessionId: null,
+          linkedinPeopleSearchUrl: null,
+          searchMode: "standard",
+        }),
 
-      setLinkedinPeopleSearchUrl: (url) => set({ linkedinPeopleSearchUrl: url }),
+      reset: () =>
+        set({
+          criteria: null,
+          companies: [],
+          selectedCompany: null,
+          employees: [],
+          selectedEmployee: null,
+          generatedEmail: "",
+          searchSessionId: null,
+          linkedinPeopleSearchUrl: null,
+          searchMode: "standard",
+        }),
+
+      setLinkedinPeopleSearchUrl: (url) =>
+        set({ linkedinPeopleSearchUrl: url }),
     }),
     {
-      name: 'bypass-search-storage',
+      name: "bypass-search-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         criteria: state.criteria,
@@ -166,10 +157,10 @@ export const useSearchStore = create<SearchStore>()(
       }),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn('Failed to rehydrate search store:', error);
-          localStorage.removeItem('bypass-search-storage');
+          console.warn("Failed to rehydrate search store:", error);
+          localStorage.removeItem("bypass-search-storage");
         }
       },
-    }
-  )
+    },
+  ),
 );

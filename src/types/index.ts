@@ -4,17 +4,34 @@ export type {
   User,
   UserInsert,
   UserUpdate,
-  SearchCriteria,
+  SearchCriteria as DatabaseSearchCriteria, // ✅ Renamed to avoid conflict
   SearchCriteriaInsert,
-  Company,        // ✅ Explicitly export Company
+  CompanyRow, // ✅ Database company type
   CompanyInsert,
-  Employee,       // ✅ Explicitly export Employee
+  EmployeeRow, // ✅ Database employee type
   EmployeeInsert,
   EmailGeneration,
   EmailGenerationInsert,
   Subscription,
   SubscriptionInsert,
-} from './database';
+} from "./database";
+
+// DON'T re-export OpenAI types - just import them when needed
+// Remove these lines that are causing the error:
+// export type {
+//   Company,
+//   Employee,
+//   SearchCriteria as OpenAISearchCriteria,
+//   EmailData,
+//   EmailContent,
+//   RelevanceScore,
+//   CompanySize,
+//   SeniorityLevel,
+//   EmailType
+// } from '@/lib/openai/types';
+
+// Import OpenAI types for use in this file only
+import type { Company, Employee } from "@/lib/openai/types";
 
 // Import validation types (don't re-export to avoid circular dependencies)
 import type {
@@ -23,7 +40,7 @@ import type {
   EmailGenerationInput,
   EmailAddressInput,
   EmployeeSearchInput,
-} from '../lib/validations';
+} from "@/lib/validations"; // ✅ Use @/ alias
 
 // Application-specific types that don't map directly to database
 export interface ApiResponse<T = any> {
@@ -53,9 +70,9 @@ export interface CreditInfo {
 // Search state management types
 export interface SearchState {
   criteria: SearchCriteriaInput | null;
-  companies: Company[];
+  companies: Company[]; // ✅ Uses OpenAI Company type
   selectedCompany: Company | null;
-  employees: Employee[];
+  employees: Employee[]; // ✅ Uses OpenAI Employee type
   selectedEmployee: Employee | null;
   generatedEmail: string;
   searchSessionId: string | null;
@@ -63,13 +80,13 @@ export interface SearchState {
 
 // API request/response types
 export interface CompanySearchResponse extends ApiResponse {
-  companies: Company[];
+  companies: Company[]; // ✅ Uses OpenAI Company type
   criteriaId: string;
   citations?: Array<{ url: string; title?: string }>;
 }
 
 export interface EmployeeSearchResponse extends ApiResponse {
-  employees: Employee[];
+  employees: Employee[]; // ✅ Uses OpenAI Employee type
   linkedinPeopleSearchUrl?: string;
 }
 
