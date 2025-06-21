@@ -2,16 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useSupabase } from "@/components/supabase-provider";
-import { useState, useEffect, Suspense } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-// Content component that uses useSearchParams
-function LoginContent() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,40 +15,17 @@ function LoginContent() {
   const [mounted, setMounted] = useState(false);
   const supabase = useSupabase();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     setMounted(true);
 
-    // Check environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      setError(
-        "Missing Supabase configuration. Please check your environment variables.",
-      );
-      return;
-    }
-
-    try {
-      // Test Supabase client creation
-      const testClient = useSupabase();
-    } catch (envError) {
-      setError(
-        envError instanceof Error ? envError.message : "Configuration error",
-      );
-      return;
-    }
-  }, []);
-
-  // Separate useEffect for handling search params to avoid hydration issues
-  useEffect(() => {
-    if (!mounted) return;
-
-    // Check for error from redirect
-    const errorParam = searchParams.get("error");
+    // Handle URL error params after mount
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get("error");
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
-  }, [searchParams, mounted]);
+  }, []);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -90,7 +62,6 @@ function LoginContent() {
       });
 
       if (error) {
-        // Handle specific error messages
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Incorrect email or password. Please try again.");
         } else if (error.message.includes("Email not confirmed")) {
@@ -117,6 +88,8 @@ function LoginContent() {
   }
 
   async function handleGoogleLogin() {
+    if (!mounted) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -149,27 +122,6 @@ function LoginContent() {
       handleLogin();
     }
   };
-
-  // Show a consistent loading state during hydration
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border p-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">
-                Loading...
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Preparing login page...
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
@@ -349,35 +301,5 @@ function LoginContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Loading fallback component
-function LoginLoadingFallback() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl border p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              Loading...
-            </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Preparing login page...
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Main component with Suspense boundary
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<LoginLoadingFallback />}>
-      <LoginContent />
-    </Suspense>
   );
 }
