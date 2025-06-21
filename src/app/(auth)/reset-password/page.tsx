@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSupabase } from '@/components/supabase-provider';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useSupabase } from "@/components/supabase-provider";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Mail } from "lucide-react";
 
 export default function ResetPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -23,25 +23,36 @@ export default function ResetPasswordPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       if (!email.trim()) {
-        throw new Error('Please enter your email address');
+        throw new Error("Please enter your email address");
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email.trim())) {
-        throw new Error('Please enter a valid email address');
+        throw new Error("Please enter a valid email address");
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${location.origin}/auth/callback?type=recovery`,
-      });
+      if (!supabase) {
+        setError("Authentication service not available. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        {
+          redirectTo: `${location.origin}/auth/callback?type=recovery`,
+        },
+      );
 
       if (error) {
         // Handle specific error cases
-        if (error.message.includes('rate limit')) {
-          throw new Error('Too many requests. Please wait a few minutes before trying again.');
+        if (error.message.includes("rate limit")) {
+          throw new Error(
+            "Too many requests. Please wait a few minutes before trying again.",
+          );
         } else {
           throw error;
         }
@@ -49,14 +60,18 @@ export default function ResetPasswordPage() {
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while sending reset email');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while sending reset email",
+      );
     } finally {
       setLoading(false);
     }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && email && !loading && !success) {
+    if (e.key === "Enter" && email && !loading && !success) {
       handleResetPassword();
     }
   };
@@ -94,10 +109,9 @@ export default function ResetPasswordPage() {
             Reset Your Password
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {success 
+            {success
               ? "Check your email for reset instructions"
-              : "Enter your email address and we'll send you a link to reset your password"
-            }
+              : "Enter your email address and we'll send you a link to reset your password"}
           </p>
         </div>
 
@@ -132,7 +146,7 @@ export default function ResetPasswordPage() {
               <Button
                 onClick={() => {
                   setSuccess(false);
-                  setEmail('');
+                  setEmail("");
                   setError(null);
                 }}
                 variant="outline"
@@ -142,7 +156,7 @@ export default function ResetPasswordPage() {
               </Button>
 
               <Button
-                onClick={() => window.location.href = '/login'}
+                onClick={() => (window.location.href = "/login")}
                 className="w-full bg-black hover:bg-gray-800"
               >
                 Back to Login
@@ -161,7 +175,10 @@ export default function ResetPasswordPage() {
             <div className="space-y-4">
               {/* Email Field */}
               <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email address
                 </Label>
                 <Input
@@ -202,7 +219,7 @@ export default function ResetPasswordPage() {
                   Sign in here
                 </a>
               </p>
-              
+
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
                 <a

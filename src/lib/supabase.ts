@@ -5,56 +5,57 @@ export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Debug logging (remove in production)
-  if (typeof window !== "undefined") {
-    console.log("🔍 Supabase Client Debug:", {
-      url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : "MISSING",
-      key: supabaseAnonKey
-        ? `${supabaseAnonKey.substring(0, 10)}...`
-        : "MISSING",
-      hasWindow: typeof window !== "undefined",
-    });
-  }
+  // Debug for Vercel
+  console.log("🔍 Vercel Environment Check:", {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlLength: supabaseUrl?.length,
+    keyLength: supabaseAnonKey?.length,
+    urlPreview: supabaseUrl?.substring(0, 30) + "...",
+    keyPreview: supabaseAnonKey?.substring(0, 20) + "...",
+    isProduction: process.env.NODE_ENV === "production",
+  });
 
   // Check for missing environment variables
-  if (!supabaseUrl) {
+  if (!supabaseUrl || supabaseUrl === "undefined") {
     throw new Error(
-      "❌ NEXT_PUBLIC_SUPABASE_URL is missing. Check your .env.local file.",
+      "❌ NEXT_PUBLIC_SUPABASE_URL is missing in Vercel environment variables",
     );
   }
 
-  if (!supabaseAnonKey) {
+  if (!supabaseAnonKey || supabaseAnonKey === "undefined") {
     throw new Error(
-      "❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing. Check your .env.local file.",
+      "❌ NEXT_PUBLIC_SUPABASE_ANON_KEY is missing in Vercel environment variables",
     );
   }
+
+  // Clean the values
+  const cleanUrl = supabaseUrl.trim();
+  const cleanKey = supabaseAnonKey.trim();
 
   // Validate URL format
   try {
-    const url = new URL(supabaseUrl);
+    const url = new URL(cleanUrl);
     if (!url.hostname.includes("supabase.co")) {
-      throw new Error(`❌ Invalid Supabase URL format: ${supabaseUrl}`);
+      throw new Error(`❌ Invalid Supabase URL: ${cleanUrl}`);
     }
   } catch (urlError) {
     throw new Error(
-      `❌ Invalid NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl}. Must be a valid URL like https://your-project.supabase.co`,
+      `❌ Invalid NEXT_PUBLIC_SUPABASE_URL: ${cleanUrl}. Error: ${urlError instanceof Error ? urlError.message : "Unknown"}`,
     );
   }
 
   // Validate anon key format
-  if (supabaseAnonKey.length < 100 || !supabaseAnonKey.startsWith("eyJ")) {
+  if (cleanKey.length < 100 || !cleanKey.startsWith("eyJ")) {
     throw new Error(
-      '❌ Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY. Must be a valid JWT token starting with "eyJ"',
+      `❌ Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY. Length: ${cleanKey.length}, Starts with: ${cleanKey.substring(0, 3)}`,
     );
   }
 
-  // Create and return the client
   try {
-    const client = createBrowserClient(supabaseUrl, supabaseAnonKey);
-    console.log("✅ Supabase client created successfully");
-    return client;
+    return createBrowserClient(cleanUrl, cleanKey);
   } catch (clientError) {
-    console.error("❌ Failed to create Supabase client:", clientError);
+    console.error("❌ Supabase client creation failed:", clientError);
     throw new Error(
       `❌ Failed to create Supabase client: ${clientError instanceof Error ? clientError.message : "Unknown error"}`,
     );

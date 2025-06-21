@@ -68,6 +68,8 @@ export default function EmployeesPage() {
   // Get user and refresh profile data
   useEffect(() => {
     const initializeUser = async () => {
+      if (!supabase) return;
+
       try {
         const {
           data: { user },

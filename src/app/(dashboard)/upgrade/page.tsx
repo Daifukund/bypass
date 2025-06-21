@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSupabase } from '@/components/supabase-provider';
-import { Button } from '@/components/ui/button';
-import { 
-  Crown, 
-  Check, 
+import { useEffect, useState } from "react";
+import { useSupabase } from "@/components/supabase-provider";
+import { Button } from "@/components/ui/button";
+import {
+  Crown,
+  Check,
   X,
   CreditCard,
   Zap,
   Users,
   Mail,
   Search,
-  Building2
-} from 'lucide-react';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+  Building2,
+} from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface UserProfile {
   id: string;
@@ -30,13 +30,27 @@ export default function UpgradePage() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error || !user) {
+        setLoading(true);
+        setError(null);
+
+        // Check if Supabase client is available
+        if (!supabase) {
+          setError("Authentication service not available");
+          return;
+        }
+
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+          setError("Please log in to view this page");
           return;
         }
 
@@ -44,18 +58,38 @@ export default function UpgradePage() {
 
         // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error fetching profile:', profileError);
+        if (profileError && profileError.code !== "PGRST116") {
+          console.error("Error fetching profile:", profileError);
+          setError("Failed to load profile data");
         } else if (profileData) {
           setProfile(profileData);
+        } else {
+          // Create profile if it doesn't exist
+          const { data: newProfile, error: createError } = await supabase
+            .from("users")
+            .insert({
+              id: user.id,
+              email: user.email,
+              plan: "freemium",
+              email_credits: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+          if (!createError) {
+            setProfile(newProfile);
+          }
         }
       } catch (error) {
-        console.error('Error in getUser:', error);
+        console.error("Error in getUser:", error);
+        setError("Failed to load user data");
       } finally {
         setLoading(false);
       }
@@ -75,41 +109,69 @@ export default function UpgradePage() {
     );
   }
 
+  if (error || !supabase) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-red-800 mb-2">Upgrade Error</h2>
+          <p className="text-red-600 mb-4">
+            {error || "Authentication service not available"}
+          </p>
+          <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Please log in to view this page</p>
+          <Button onClick={() => (window.location.href = "/login")}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const emailCreditsUsed = profile?.email_credits || 0;
   const maxFreeCredits = 5;
-  const isPremium = profile?.plan === 'premium';
+  const isPremium = profile?.plan === "premium";
 
   const features = [
     {
-      name: 'Company Searches',
-      free: 'Limited (until 5 emails used)',
-      premium: 'Unlimited',
-      icon: Building2
+      name: "Company Searches",
+      free: "Limited (until 5 emails used)",
+      premium: "Unlimited",
+      icon: Building2,
     },
     {
-      name: 'Contact Searches',
-      free: 'Limited (until 5 emails used)',
-      premium: 'Unlimited',
-      icon: Users
+      name: "Contact Searches",
+      free: "Limited (until 5 emails used)",
+      premium: "Unlimited",
+      icon: Users,
     },
     {
-      name: 'Email Generations',
-      free: '5 Free Emails',
-      premium: 'Unlimited',
-      icon: Mail
+      name: "Email Generations",
+      free: "5 Free Emails",
+      premium: "Unlimited",
+      icon: Mail,
     },
     {
-      name: 'AI Customization',
-      free: 'Limited',
-      premium: 'Advanced AI Messaging',
-      icon: Zap
+      name: "AI Customization",
+      free: "Limited",
+      premium: "Advanced AI Messaging",
+      icon: Zap,
     },
     {
-      name: 'Support',
-      free: 'Community',
-      premium: 'Priority Support',
-      icon: CreditCard
-    }
+      name: "Support",
+      free: "Community",
+      premium: "Priority Support",
+      icon: CreditCard,
+    },
   ];
 
   return (
@@ -121,9 +183,12 @@ export default function UpgradePage() {
             <Crown className="h-8 w-8 text-white" />
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Ready to Skip the Job Board Queue?</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Ready to Skip the Job Board Queue?
+        </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Upgrade to unlock unlimited email generation, smart personalization, and faster replies.
+          Upgrade to unlock unlimited email generation, smart personalization,
+          and faster replies.
         </p>
       </div>
 
@@ -137,8 +202,10 @@ export default function UpgradePage() {
             <div>
               <h3 className="font-semibold text-yellow-800">Current Usage</h3>
               <p className="text-yellow-700">
-                You've used {emailCreditsUsed} out of {maxFreeCredits} free email generations.
-                {emailCreditsUsed >= maxFreeCredits && " Upgrade to continue finding contacts!"}
+                You've used {emailCreditsUsed} out of {maxFreeCredits} free
+                email generations.
+                {emailCreditsUsed >= maxFreeCredits &&
+                  " Upgrade to continue finding contacts!"}
               </p>
             </div>
           </div>
@@ -153,7 +220,10 @@ export default function UpgradePage() {
             <h3 className="text-2xl font-bold text-gray-900">Freemium</h3>
             <div className="text-4xl font-bold text-gray-900">
               Free
-              <span className="text-lg font-normal text-gray-600"> forever</span>
+              <span className="text-lg font-normal text-gray-600">
+                {" "}
+                forever
+              </span>
             </div>
             <p className="text-gray-600">Perfect for trying out Bypass</p>
           </div>
@@ -163,7 +233,9 @@ export default function UpgradePage() {
               <li key={feature.name} className="flex items-start space-x-3">
                 <feature.icon className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <span className="font-medium text-gray-900">{feature.name}</span>
+                  <span className="font-medium text-gray-900">
+                    {feature.name}
+                  </span>
                   <p className="text-sm text-gray-600">{feature.free}</p>
                 </div>
               </li>
@@ -171,12 +243,8 @@ export default function UpgradePage() {
           </ul>
 
           <div className="mt-8">
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              disabled={!isPremium}
-            >
-              {!isPremium ? 'Current Plan' : 'Downgrade'}
+            <Button variant="outline" className="w-full" disabled={!isPremium}>
+              {!isPremium ? "Current Plan" : "Downgrade"}
             </Button>
           </div>
         </div>
@@ -203,7 +271,9 @@ export default function UpgradePage() {
               <li key={feature.name} className="flex items-start space-x-3">
                 <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <span className="font-medium text-gray-900">{feature.name}</span>
+                  <span className="font-medium text-gray-900">
+                    {feature.name}
+                  </span>
                   <p className="text-sm text-gray-600">{feature.premium}</p>
                 </div>
               </li>
@@ -211,11 +281,11 @@ export default function UpgradePage() {
           </ul>
 
           <div className="mt-8">
-            <Button 
+            <Button
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
               disabled={isPremium}
             >
-              {isPremium ? 'Current Plan' : 'Upgrade Now'}
+              {isPremium ? "Current Plan" : "Upgrade Now"}
             </Button>
           </div>
         </div>
@@ -233,7 +303,8 @@ export default function UpgradePage() {
             </div>
             <h4 className="font-semibold text-gray-900">Unlimited Access</h4>
             <p className="text-sm text-gray-600">
-              No limits on company searches, contact discovery, or email generation.
+              No limits on company searches, contact discovery, or email
+              generation.
             </p>
           </div>
           <div className="text-center space-y-3">

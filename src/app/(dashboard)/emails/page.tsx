@@ -130,8 +130,10 @@ export default function EmailsPage() {
     }
   }, [selectedEmployee, selectedCompany, router]);
 
-  // Get user and profile data
+  // ✅ FIXED: Check if supabase is available before using it
   useEffect(() => {
+    if (!supabase) return; // Wait for Supabase to be initialized
+
     const getUser = async () => {
       try {
         const {
@@ -168,13 +170,20 @@ export default function EmailsPage() {
 
   // Auto-generate email address when component loads
   useEffect(() => {
-    if (selectedEmployee && selectedCompany && !guessedEmail && user) {
+    if (
+      selectedEmployee &&
+      selectedCompany &&
+      !guessedEmail &&
+      user &&
+      supabase
+    ) {
       generateEmailAddress();
     }
-  }, [selectedEmployee, selectedCompany, guessedEmail, user]);
+  }, [selectedEmployee, selectedCompany, guessedEmail, user, supabase]);
 
   const generateEmailAddress = async () => {
-    if (!selectedEmployee || !selectedCompany || isGeneratingEmail) return;
+    if (!selectedEmployee || !selectedCompany || isGeneratingEmail || !supabase)
+      return;
 
     setIsGeneratingEmail(true);
     setIsLoading(true);
@@ -434,7 +443,7 @@ export default function EmailsPage() {
 
   // Add this function to force refresh profile
   const refreshUserProfile = useCallback(async () => {
-    if (!user) return;
+    if (!user || !supabase) return;
 
     try {
       const { data: profileData, error: profileError } = await supabase
@@ -458,6 +467,18 @@ export default function EmailsPage() {
   useEffect(() => {
     refreshUserProfile();
   }, [refreshUserProfile]);
+
+  // ✅ Show loading state while Supabase initializes
+  if (!supabase) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Connecting to database...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedEmployee || !selectedCompany || !user) {
     return (

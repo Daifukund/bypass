@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useSupabase } from '@/components/supabase-provider';
-import { useAppStore } from '@/stores/app-store';
-import { Button } from '@/components/ui/button';
-import { 
-  LogOut, 
-  User, 
-  CreditCard, 
-  HelpCircle, 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useSupabase } from "@/components/supabase-provider";
+import { useAppStore } from "@/stores/app-store";
+import { Button } from "@/components/ui/button";
+import {
+  LogOut,
+  User,
+  CreditCard,
+  HelpCircle,
   Home,
   Search,
   Mail,
   Menu,
-  X
-} from 'lucide-react';
+  X,
+} from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -27,11 +27,11 @@ export default function DashboardLayout({
   const supabase = useSupabase();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
-  
+
   // Use global store
-  const { 
-    user, 
-    profile, 
+  const {
+    user,
+    profile,
     loading: storeLoading,
     emailCreditsUsed,
     maxFreeCredits,
@@ -39,61 +39,68 @@ export default function DashboardLayout({
     creditsRemaining,
     setUser,
     setProfile,
-    clearUser 
+    clearUser,
   } = useAppStore();
 
   // ✅ ALWAYS call all hooks at the top level - no conditional hooks
-  
+
   // Initialize user on mount - simplified approach
   useEffect(() => {
     const initializeAuth = async () => {
+      if (!supabase) {
+        console.log("⏳ Layout: Waiting for Supabase initialization...");
+        return;
+      }
+
       try {
-        console.log('🔄 Layout: Checking authentication...');
-        
+        console.log("🔄 Layout: Checking authentication...");
+
         // Quick session check first
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError || !session) {
-          console.log('No valid session, redirecting to login');
+          console.log("No valid session, redirecting to login");
           setLocalLoading(false);
-          router.push('/login');
+          router.push("/login");
           return;
         }
-        
+
         // Set basic user info immediately
         const basicUser = {
           id: session.user.id,
-          email: session.user.email || ''
+          email: session.user.email || "",
         };
-        
+
         setUser(basicUser);
-        console.log('✅ Layout: Basic user set');
-        
+        console.log("✅ Layout: Basic user set");
+
         // Load profile in background (non-blocking)
         try {
           const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
+            .from("users")
+            .select("*")
+            .eq("id", session.user.id)
             .single();
-            
+
           if (profileData) {
             setProfile(profileData);
-            console.log('✅ Layout: Profile loaded', { 
+            console.log("✅ Layout: Profile loaded", {
               created_at: profileData.created_at,
-              hasCompletedOnboarding: profileData.hasCompletedOnboarding 
+              hasCompletedOnboarding: profileData.hasCompletedOnboarding,
             });
           } else {
-            console.log('⚠️ No profile found for user');
+            console.log("⚠️ No profile found for user");
           }
         } catch (profileError) {
-          console.warn('Profile loading failed, but continuing:', profileError);
+          console.warn("Profile loading failed, but continuing:", profileError);
           // Continue without profile - user can still use the app
         }
-        
       } catch (error) {
-        console.error('❌ Layout: Authentication check failed:', error);
-        router.push('/login');
+        console.error("❌ Layout: Authentication check failed:", error);
+        router.push("/login");
       } finally {
         setLocalLoading(false);
       }
@@ -104,58 +111,65 @@ export default function DashboardLayout({
 
   // Handle auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth state change:', event);
-        if (event === 'SIGNED_OUT' || !session) {
-          clearUser();
-          router.push('/login');
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Simple re-initialization without complex retry logic
-          if (session.user) {
-            setUser({ id: session.user.id, email: session.user.email || '' });
-          }
+    if (!supabase) return;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔐 Auth state change:", event);
+      if (event === "SIGNED_OUT" || !session) {
+        clearUser();
+        router.push("/login");
+      } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        // Simple re-initialization without complex retry logic
+        if (session.user) {
+          setUser({ id: session.user.id, email: session.user.email || "" });
         }
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [supabase, router, setUser, clearUser]);
 
   // Debug info - always called
   useEffect(() => {
-    console.log('🔍 Debug Info:', {
+    console.log("🔍 Debug Info:", {
       user: !!user,
       profile: !!profile,
       storeLoading,
       localLoading,
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + '...',
-      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      supabaseUrl:
+        process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + "...",
+      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     });
   }, [user, profile, storeLoading, localLoading]);
 
   // ✅ All hooks are called above this point
 
   const handleSignOut = async () => {
+    if (!supabase) return;
+
     try {
       await supabase.auth.signOut();
       clearUser();
-      router.push('/login');
+      router.push("/login");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
   // Show loading screen
   if (localLoading) {
-    console.log('🔄 Layout: Showing loading screen');
+    console.log("🔄 Layout: Showing loading screen");
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
-          <p className="mt-2 text-xs text-gray-500">Checking authentication...</p>
-          
+          <p className="mt-2 text-xs text-gray-500">
+            Checking authentication...
+          </p>
+
           <div className="mt-6">
             <button
               onClick={() => window.location.reload()}
@@ -171,22 +185,22 @@ export default function DashboardLayout({
 
   // If no user after loading, redirect to login
   if (!user) {
-    console.log('❌ Layout: No user found, redirecting to login');
-    router.push('/login');
+    console.log("❌ Layout: No user found, redirecting to login");
+    router.push("/login");
     return null;
   }
 
-  console.log('✅ Layout: Rendering with user:', user.email);
+  console.log("✅ Layout: Rendering with user:", user.email);
 
-  const userName = profile?.first_name 
-    ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-    : user?.email?.split('@')[0] || 'User';
+  const userName = profile?.first_name
+    ? `${profile.first_name} ${profile.last_name || ""}`.trim()
+    : user?.email?.split("@")[0] || "User";
 
   // Navigation items
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Search', href: '/criteria', icon: Search },
-    { name: 'Find Email', href: '/find-email', icon: Mail },
+    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Search", href: "/criteria", icon: Search },
+    { name: "Find Email", href: "/find-email", icon: Mail },
   ];
 
   return (
@@ -239,7 +253,7 @@ export default function DashboardLayout({
                     Profile
                   </Button>
                 </Link>
-                
+
                 {!isPremium && (
                   <Link href="/upgrade">
                     <Button variant="outline" size="sm">
@@ -319,7 +333,7 @@ export default function DashboardLayout({
                   <User className="mr-3 h-5 w-5" />
                   Profile
                 </Link>
-                
+
                 {!isPremium && (
                   <Link
                     href="/upgrade"

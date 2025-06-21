@@ -66,6 +66,12 @@ function SignUpContent() {
       setError(null);
       setMessage(null);
 
+      if (!supabase) {
+        setError("Authentication service not available. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -110,6 +116,12 @@ function SignUpContent() {
     try {
       setLoading(true);
       setError(null);
+
+      if (!supabase) {
+        setError("Authentication service not available. Please try again.");
+        setLoading(false);
+        return;
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",

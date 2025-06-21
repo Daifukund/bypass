@@ -13,8 +13,23 @@ function CallbackContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  if (!supabase) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            Connecting to authentication service...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const handleAuthCallback = async () => {
+      if (!supabase) return;
+
       try {
         const type = searchParams.get("type");
 
@@ -135,6 +150,11 @@ function CallbackContent() {
       handleAuthCallback();
     } else {
       // No code parameter, check if user is already authenticated
+      if (!supabase) {
+        router.push("/login");
+        return;
+      }
+
       supabase.auth.getSession().then(({ data: { session }, error }) => {
         if (error) {
           console.error("Session check error:", error);
