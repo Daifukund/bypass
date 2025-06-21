@@ -24,23 +24,18 @@ function LoginContent() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Separate useEffect for handling search params to avoid hydration issues
+  useEffect(() => {
+    if (!mounted) return;
 
     // Check for error from redirect
     const errorParam = searchParams.get("error");
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
-
-    // Add environment variable check
-    try {
-      const testClient = useSupabase();
-      // This will trigger the error if env vars are missing
-    } catch (envError) {
-      setError(
-        envError instanceof Error ? envError.message : "Configuration error",
-      );
-    }
-  }, [searchParams]);
+  }, [searchParams, mounted]);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -111,7 +106,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -137,13 +132,21 @@ function LoginContent() {
     }
   };
 
+  // Show a consistent loading state during hydration
   if (!mounted) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                Loading...
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Preparing login page...
+              </p>
+            </div>
           </div>
         </div>
       </div>
