@@ -13,17 +13,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const supabase = useSupabase();
   const router = useRouter();
+
+  // Initialize Supabase client safely
+  const [supabase, setSupabaseClient] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
 
-    // Handle URL error params after mount
-    const urlParams = new URLSearchParams(window.location.search);
-    const errorParam = urlParams.get("error");
-    if (errorParam) {
-      setError(decodeURIComponent(errorParam));
+    try {
+      const client = useSupabase();
+      setSupabaseClient(client);
+
+      // Handle URL error params after mount
+      const urlParams = new URLSearchParams(window.location.search);
+      const errorParam = urlParams.get("error");
+      if (errorParam) {
+        setError(decodeURIComponent(errorParam));
+      }
+    } catch (err) {
+      console.error("Failed to initialize Supabase:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to initialize authentication",
+      );
     }
   }, []);
 
@@ -50,11 +64,20 @@ export default function LoginPage() {
   async function handleLogin(e?: React.FormEvent) {
     if (e) e.preventDefault();
 
+    if (!supabase) {
+      setError(
+        "Authentication service not available. Please refresh the page.",
+      );
+      return;
+    }
+
     if (!validateForm()) return;
 
     try {
       setLoading(true);
       setError(null);
+
+      console.log("🔐 Attempting login...");
 
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -62,6 +85,8 @@ export default function LoginPage() {
       });
 
       if (error) {
+        console.error("Login error:", error);
+
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Incorrect email or password. Please try again.");
         } else if (error.message.includes("Email not confirmed")) {
@@ -77,8 +102,10 @@ export default function LoginPage() {
         }
       }
 
+      console.log("✅ Login successful, redirecting...");
       router.push("/dashboard");
     } catch (err) {
+      console.error("Login failed:", err);
       setError(
         err instanceof Error ? err.message : "An error occurred during login",
       );
@@ -88,7 +115,12 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
-    if (!mounted) return;
+    if (!mounted || !supabase) {
+      setError(
+        "Authentication service not available. Please refresh the page.",
+      );
+      return;
+    }
 
     try {
       setLoading(true);
@@ -118,10 +150,31 @@ export default function LoginPage() {
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && email && password && !loading) {
+    if (e.key === "Enter" && email && password && !loading && supabase) {
       handleLogin();
     }
   };
+
+  // Show loading state if not mounted or no Supabase client
+  if (!mounted || !supabase) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                Loading...
+              </h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Preparing login page...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
@@ -228,7 +281,7 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || !email || !password || !supabase}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center"
             >
               {loading ? (
@@ -255,7 +308,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              disabled={loading}
+              disabled={loading || !supabase}
               className="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
