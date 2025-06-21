@@ -380,4 +380,32 @@ function SignUpContent() {
   );
 }
 
-export default SignUpContent;
+// Loading fallback component
+function SignUpLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center px-4">
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl border p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <h3 className="mt-4 text-lg font-medium text-gray-900">
+              Loading...
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Preparing signup page...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary - THIS IS THE KEY FIX
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<SignUpLoadingFallback />}>
+      <SignUpContent />
+    </Suspense>
+  );
+}
