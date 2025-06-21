@@ -30,6 +30,16 @@ function LoginContent() {
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
+
+    // Add environment variable check
+    try {
+      const testClient = useSupabase();
+      // This will trigger the error if env vars are missing
+    } catch (envError) {
+      setError(
+        envError instanceof Error ? envError.message : "Configuration error",
+      );
+    }
   }, [searchParams]);
 
   const validateForm = () => {
