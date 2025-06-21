@@ -18,8 +18,32 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Add a timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        setError("Timeout: Failed to initialize authentication service");
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
     try {
       console.log("🚀 Initializing Supabase client...");
+
+      // Check environment variables first
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      console.log("Environment check:", {
+        hasUrl: !!url,
+        hasKey: !!key,
+        url: url?.substring(0, 30) + "...",
+        key: key?.substring(0, 20) + "...",
+      });
+
+      if (!url || !key) {
+        throw new Error("Missing Supabase environment variables");
+      }
+
       const client = createClient();
       setSupabase(client);
       setError(null);
@@ -31,6 +55,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       );
       setSupabase(null);
     } finally {
+      clearTimeout(timeout);
       setIsLoading(false);
     }
   }, []);

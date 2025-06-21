@@ -13,31 +13,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const supabase = useSupabase();
   const router = useRouter();
-
-  // Initialize Supabase client safely
-  const [supabase, setSupabaseClient] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
 
-    try {
-      const client = useSupabase();
-      setSupabaseClient(client);
-
-      // Handle URL error params after mount
+    // Handle URL error params after mount
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const errorParam = urlParams.get("error");
       if (errorParam) {
         setError(decodeURIComponent(errorParam));
       }
-    } catch (err) {
-      console.error("Failed to initialize Supabase:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to initialize authentication",
-      );
     }
   }, []);
 
@@ -115,7 +103,7 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
-    if (!mounted || !supabase) {
+    if (!supabase) {
       setError(
         "Authentication service not available. Please refresh the page.",
       );
@@ -155,8 +143,8 @@ export default function LoginPage() {
     }
   };
 
-  // Show loading state if not mounted or no Supabase client
-  if (!mounted || !supabase) {
+  // Show loading only if not mounted
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
         <div className="max-w-md w-full">
@@ -169,6 +157,41 @@ export default function LoginPage() {
               <p className="mt-2 text-sm text-gray-500">
                 Preparing login page...
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if Supabase failed to initialize
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-white flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl border border-red-200 p-8">
+            <div className="text-center">
+              <div className="text-red-500 text-4xl mb-4">⚠️</div>
+              <h2 className="text-xl font-bold text-red-800 mb-2">
+                Configuration Error
+              </h2>
+              <p className="text-red-600 text-sm mb-4">
+                Failed to initialize authentication service.
+              </p>
+              <div className="text-xs text-gray-500 bg-gray-100 p-3 rounded mb-4">
+                <p className="font-semibold mb-1">To fix this:</p>
+                <ol className="text-left list-decimal list-inside space-y-1">
+                  <li>Check your .env.local file exists</li>
+                  <li>Verify your Supabase URL and anon key are correct</li>
+                  <li>Restart your development server</li>
+                </ol>
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
             </div>
           </div>
         </div>
@@ -281,7 +304,7 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={loading || !email || !password || !supabase}
+              disabled={loading || !email || !password}
               className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center"
             >
               {loading ? (
@@ -308,7 +331,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              disabled={loading || !supabase}
+              disabled={loading}
               className="w-full bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
