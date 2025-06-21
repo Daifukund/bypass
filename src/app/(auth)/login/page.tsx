@@ -24,6 +24,24 @@ function LoginContent() {
 
   useEffect(() => {
     setMounted(true);
+
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setError(
+        "Missing Supabase configuration. Please check your environment variables.",
+      );
+      return;
+    }
+
+    try {
+      // Test Supabase client creation
+      const testClient = useSupabase();
+    } catch (envError) {
+      setError(
+        envError instanceof Error ? envError.message : "Configuration error",
+      );
+      return;
+    }
   }, []);
 
   // Separate useEffect for handling search params to avoid hydration issues
