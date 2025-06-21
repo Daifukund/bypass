@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useSearchStore } from "@/stores/search-store";
 import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";
