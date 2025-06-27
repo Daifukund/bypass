@@ -18,9 +18,7 @@ function CallbackContent() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            Connecting to authentication service...
-          </p>
+          <p className="text-gray-600">Connecting to authentication service...</p>
         </div>
       </div>
     );
@@ -35,9 +33,7 @@ function CallbackContent() {
 
         // Handle password recovery flow
         if (type === "recovery") {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(
-            window.location.href,
-          );
+          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
 
           if (error) {
             console.error("Password recovery error:", error);
@@ -57,9 +53,7 @@ function CallbackContent() {
         }
 
         // Handle regular OAuth callback
-        const { data, error } = await supabase.auth.exchangeCodeForSession(
-          window.location.href,
-        );
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
 
         if (error) {
           console.error("Auth callback error:", error);
@@ -93,10 +87,7 @@ function CallbackContent() {
                 "",
               last_name:
                 data.session.user.user_metadata?.last_name ||
-                data.session.user.user_metadata?.full_name
-                  ?.split(" ")
-                  .slice(1)
-                  .join(" ") ||
+                data.session.user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ||
                 "",
               plan: "freemium",
               email_credits: 0,
@@ -104,9 +95,7 @@ function CallbackContent() {
               updated_at: new Date().toISOString(),
             };
 
-            const { error: insertError } = await supabase
-              .from("users")
-              .insert(newProfile);
+            const { error: insertError } = await supabase.from("users").insert(newProfile);
 
             if (insertError) {
               console.error("Error creating user profile:", insertError);
@@ -118,7 +107,8 @@ function CallbackContent() {
 
           // Successful authentication - redirect to dashboard
           console.log("🎯 Redirecting to dashboard after successful auth");
-          router.push("/dashboard");
+          const next = searchParams.get("next") ?? "/dashboard"; // Default to dashboard
+          router.push(next);
         } else {
           // No session found
           setError("No session found");
@@ -126,9 +116,7 @@ function CallbackContent() {
         }
       } catch (err) {
         console.error("Callback handling error:", err);
-        setError(
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        );
+        setError(err instanceof Error ? err.message : "An unexpected error occurred");
         router.push("/login?error=Authentication failed");
       } finally {
         setLoading(false);
@@ -188,9 +176,7 @@ function CallbackContent() {
               />
             </svg>
           </div>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
-            Authentication Error
-          </h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Authentication Error</h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
             <button
@@ -250,9 +236,7 @@ function LoadingFallback() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
         <h3 className="mt-2 text-sm font-medium text-gray-900">Loading...</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Preparing authentication...
-        </p>
+        <p className="mt-1 text-sm text-gray-500">Preparing authentication...</p>
       </div>
     </div>
   );
