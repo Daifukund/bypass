@@ -4,10 +4,7 @@
  */
 
 import type { EmailGenerationParams } from "@/lib/openai/services/email-generation";
-import {
-  LINKEDIN_GEO_REGIONS,
-  getLinkedInRegionCode,
-} from "./linkedin-regions";
+import { LINKEDIN_GEO_REGIONS, getLinkedInRegionCode } from "./linkedin-regions";
 
 // Types for better type safety
 interface SearchCriteria {
@@ -42,7 +39,7 @@ export const OPENAI_PROMPTS = {
    * Used for finding companies that match job search criteria
    */
   COMPANY_DISCOVERY: (
-    criteria: SearchCriteria,
+    criteria: SearchCriteria
   ): string => `You are an AI assistant helping job seekers discover companies that best match their search criteria. The user has filled in the following preferences (some fields may be empty):
 • Job Title: ${criteria.jobTitle || "Not specified"}
 • Location: ${criteria.location || "Not specified"}
@@ -124,12 +121,18 @@ Find 4-8 current employees who are:
 • "Good Contact" = Same department/function, related role, or team lead
 • "Average Contact" = Relevant department but different level/function
 
-🎯 OUTPUT FORMAT - Return ONLY this JSON structure:
+🎯 CRITICAL OUTPUT REQUIREMENTS:
+1. ALWAYS return ONLY valid JSON in this EXACT format
+2. NO explanatory text, NO markdown, NO additional content
+3. If you cannot find real employees, return {"employees": []}
+4. NEVER return placeholder names or fake data
+
+REQUIRED JSON FORMAT:
 {
   "employees": [
     {
       "fullName": "Real Person Name",
-      "jobTitle": "Their Current Job Title",
+      "jobTitle": "Their Current Job Title", 
       "location": "City, Country",
       "relevanceScore": "Perfect Contact|Good Contact|Average Contact",
       "linkedinUrl": "https://linkedin.com/in/profile-url",
@@ -138,12 +141,12 @@ Find 4-8 current employees who are:
   ]
 }
 
-CRITICAL: 
-- Only return real people with real names and job titles
-- If you cannot find any relevant employees, return {"employees": []}
-- Do not invent or hallucinate any information
-- LinkedIn URLs should be real when available, empty string if not found
-- Focus on quality over quantity - better to return 3 great contacts than 8 mediocre ones
+ABSOLUTE REQUIREMENTS: 
+- Return ONLY the JSON object above, nothing else
+- If no real employees found, return: {"employees": []}
+- Do not include explanations, apologies, or additional text
+- Do not return salary information or company descriptions
+- Focus ONLY on finding real employee names and titles
 
 Search now for current employees at "${criteria.companyName}" relevant to "${criteria.jobTitle}".`,
 
@@ -155,7 +158,7 @@ Search now for current employees at "${criteria.companyName}" relevant to "${cri
     fullName: string,
     companyName: string,
     jobTitle?: string,
-    location?: string,
+    location?: string
   ): string => `You are an assistant that specializes in predicting professional email addresses based on standard corporate naming conventions.
 
 Use the following input:
@@ -302,11 +305,7 @@ Return ONLY the email in the exact format above.`;
    * LinkedIn URL Generation Prompt
    * Used for generating LinkedIn search URLs
    */
-  LINKEDIN_URL_GENERATION: (
-    companyName: string,
-    jobTitle: string,
-    location?: string,
-  ): string => {
+  LINKEDIN_URL_GENERATION: (companyName: string, jobTitle: string, location?: string): string => {
     // Get the region code for the location
     const regionCode = location ? getLinkedInRegionCode(location) : null;
 
@@ -342,7 +341,7 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
    */
   LINKEDIN_PASTE_ANALYSIS: (
     content: string,
-    companyName: string,
+    companyName: string
   ): string => `You are a LinkedIn content analyzer. Extract employee information from the following pasted LinkedIn search results.
 
 Company: ${companyName}

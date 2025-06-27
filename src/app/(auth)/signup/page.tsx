@@ -83,30 +83,22 @@ function SignUpContent() {
       if (error) {
         // Handle specific error cases
         if (error.message.includes("already registered")) {
-          throw new Error(
-            "This email is already registered. Try logging in instead.",
-          );
+          throw new Error("This email is already registered. Try logging in instead.");
         } else if (error.message.includes("weak password")) {
-          throw new Error(
-            "Password is too weak. Please choose a stronger password.",
-          );
+          throw new Error("Password is too weak. Please choose a stronger password.");
         } else {
           throw error;
         }
       }
 
       if (data?.user && !data.session) {
-        setMessage(
-          "Great! Check your email for the confirmation link to complete your signup.",
-        );
+        setMessage("Great! Check your email for the confirmation link to complete your signup.");
       } else if (data?.session) {
         // User is immediately signed in (email confirmation disabled)
         router.push("/dashboard");
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An error occurred during signup",
-      );
+      setError(err instanceof Error ? err.message : "An error occurred during signup");
     } finally {
       setLoading(false);
     }
@@ -126,7 +118,7 @@ function SignUpContent() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${location.origin}/auth/callback`,
+          redirectTo: `https://bypass-eta.vercel.app/auth/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -136,11 +128,7 @@ function SignUpContent() {
 
       if (error) throw error;
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Google signup failed. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : "Google signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -172,18 +160,14 @@ function SignUpContent() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 text-sm text-green-600 mb-2">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="font-medium">
-              127 students got interviews this week
-            </span>
+            <span className="font-medium">127 students got interviews this week</span>
           </div>
         </div>
 
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border p-8">
           <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold mb-2">
-              Create Your Free Account
-            </h2>
+            <h2 className="text-xl font-semibold mb-2">Create Your Free Account</h2>
             <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
               <span className="flex items-center gap-1">
                 <span className="text-green-500">✓</span>
@@ -204,11 +188,7 @@ function SignUpContent() {
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-green-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -228,11 +208,7 @@ function SignUpContent() {
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -250,10 +226,7 @@ function SignUpContent() {
           <form className="space-y-5" onSubmit={handleSignup}>
             {/* Email Input */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
               </label>
               <input
@@ -271,10 +244,7 @@ function SignUpContent() {
 
             {/* Password Input with Toggle */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -322,9 +292,7 @@ function SignUpContent() {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-gray-500">
-                  or continue with
-                </span>
+                <span className="px-3 bg-white text-gray-500">or continue with</span>
               </div>
             </div>
 
@@ -361,10 +329,7 @@ function SignUpContent() {
           <div className="text-center mt-6">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
+              <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
                 Log in here
               </Link>
             </p>
@@ -378,10 +343,7 @@ function SignUpContent() {
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link
-                href="/privacy"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
                 Privacy Policy
               </Link>
             </p>
@@ -400,12 +362,8 @@ function SignUpLoadingFallback() {
         <div className="bg-white rounded-2xl shadow-xl border p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              Loading...
-            </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Preparing signup page...
-            </p>
+            <h3 className="mt-4 text-lg font-medium text-gray-900">Loading...</h3>
+            <p className="mt-2 text-sm text-gray-500">Preparing signup page...</p>
           </div>
         </div>
       </div>

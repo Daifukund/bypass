@@ -53,9 +53,7 @@ export default function LoginPage() {
     if (e) e.preventDefault();
 
     if (!supabase) {
-      setError(
-        "Authentication service not available. Please refresh the page.",
-      );
+      setError("Authentication service not available. Please refresh the page.");
       return;
     }
 
@@ -78,12 +76,10 @@ export default function LoginPage() {
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Incorrect email or password. Please try again.");
         } else if (error.message.includes("Email not confirmed")) {
-          throw new Error(
-            "Please check your email and confirm your account first.",
-          );
+          throw new Error("Please check your email and confirm your account first.");
         } else if (error.message.includes("too many requests")) {
           throw new Error(
-            "Too many login attempts. Please wait a few minutes before trying again.",
+            "Too many login attempts. Please wait a few minutes before trying again."
           );
         } else {
           throw error;
@@ -94,9 +90,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error("Login failed:", err);
-      setError(
-        err instanceof Error ? err.message : "An error occurred during login",
-      );
+      setError(err instanceof Error ? err.message : "An error occurred during login");
     } finally {
       setLoading(false);
     }
@@ -104,9 +98,7 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     if (!supabase) {
-      setError(
-        "Authentication service not available. Please refresh the page.",
-      );
+      setError("Authentication service not available. Please refresh the page.");
       return;
     }
 
@@ -117,7 +109,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `https://bypass-eta.vercel.app/auth/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
@@ -127,11 +119,7 @@ export default function LoginPage() {
 
       if (error) throw error;
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Google login failed. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : "Google login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -151,12 +139,8 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl shadow-xl border p-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-              <h3 className="mt-4 text-lg font-medium text-gray-900">
-                Loading...
-              </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                Preparing login page...
-              </p>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Loading...</h3>
+              <p className="mt-2 text-sm text-gray-500">Preparing login page...</p>
             </div>
           </div>
         </div>
@@ -172,9 +156,7 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl shadow-xl border border-red-200 p-8">
             <div className="text-center">
               <div className="text-red-500 text-4xl mb-4">⚠️</div>
-              <h2 className="text-xl font-bold text-red-800 mb-2">
-                Configuration Error
-              </h2>
+              <h2 className="text-xl font-bold text-red-800 mb-2">Configuration Error</h2>
               <p className="text-red-600 text-sm mb-4">
                 Failed to initialize authentication service.
               </p>
@@ -205,17 +187,13 @@ export default function LoginPage() {
         {/* Header with Energy */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-3">Welcome back!</h1>
-          <p className="text-lg text-gray-600 mb-4">
-            Ready to Find Your Next Opportunity?
-          </p>
+          <p className="text-lg text-gray-600 mb-4">Ready to Find Your Next Opportunity?</p>
         </div>
 
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-xl border p-8">
           <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold mb-2">
-              Log In to Your Account
-            </h2>
+            <h2 className="text-xl font-semibold mb-2">Log In to Your Account</h2>
             <p className="text-sm text-gray-600">
               Access your searches, contacts, and email credits
             </p>
@@ -226,11 +204,7 @@ export default function LoginPage() {
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -248,10 +222,7 @@ export default function LoginPage() {
           <form className="space-y-5" onSubmit={handleLogin}>
             {/* Email Input */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email address
               </label>
               <input
@@ -269,10 +240,7 @@ export default function LoginPage() {
 
             {/* Password Input with Toggle */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">

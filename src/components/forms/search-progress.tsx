@@ -1,10 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Search, Globe, FileText, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Search, Globe, FileText, CheckCircle } from "lucide-react";
 
 interface SearchProgressProps {
   isVisible: boolean;
+  apiProgress?: number;
   onComplete?: () => void;
 }
 
@@ -13,30 +14,30 @@ const PROGRESS_STEPS = [
     id: 1,
     text: "Analyzing your job search criteria...",
     icon: Search,
-    duration: 1500,
-    progress: 25
+    minProgress: 0,
+    maxProgress: 25,
   },
   {
     id: 2,
     text: "Searching the web for the best-fit companies...",
     icon: Globe,
-    duration: 3000,
-    progress: 70
+    minProgress: 25,
+    maxProgress: 70,
   },
   {
     id: 3,
     text: "Preparing your personalized company list...",
     icon: FileText,
-    duration: 1500,
-    progress: 95
+    minProgress: 70,
+    maxProgress: 95,
   },
   {
     id: 4,
     text: "Ready! Redirecting to your results...",
     icon: CheckCircle,
-    duration: 500,
-    progress: 100
-  }
+    minProgress: 95,
+    maxProgress: 100,
+  },
 ];
 
 // Inline Progress component to avoid import issues
@@ -45,7 +46,7 @@ function InlineProgress({ value = 0 }: { value: number }) {
     <div className="relative h-3 w-full overflow-hidden rounded-full bg-gray-200">
       <div
         className="h-full bg-blue-600 transition-all duration-500 ease-out"
-        style={{ 
+        style={{
           width: `${Math.min(Math.max(value, 0), 100)}%`,
         }}
       />
@@ -53,60 +54,36 @@ function InlineProgress({ value = 0 }: { value: number }) {
   );
 }
 
-export function SearchProgress({ isVisible, onComplete }: SearchProgressProps) {
+export function SearchProgress({ isVisible, apiProgress = 0, onComplete }: SearchProgressProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
 
   useEffect(() => {
     if (!isVisible) {
       setCurrentStep(0);
-      setProgress(0);
+      setDisplayProgress(0);
       return;
     }
 
-    let timeoutId: NodeJS.Timeout;
-    let currentStepIndex = 0;
+    // Find the current step based on API progress
+    const stepIndex = PROGRESS_STEPS.findIndex(
+      (step) => apiProgress >= step.minProgress && apiProgress <= step.maxProgress
+    );
 
-    const runStep = () => {
-      if (currentStepIndex >= PROGRESS_STEPS.length) {
+    if (stepIndex !== -1) {
+      setCurrentStep(stepIndex);
+    }
+
+    // Smoothly animate to the API progress
+    setDisplayProgress(apiProgress);
+
+    // Trigger completion when API reaches 100%
+    if (apiProgress >= 100) {
+      setTimeout(() => {
         onComplete?.();
-        return;
-      }
-
-      const step = PROGRESS_STEPS[currentStepIndex];
-      setCurrentStep(currentStepIndex);
-      
-      // Animate progress bar smoothly
-      const startProgress = currentStepIndex === 0 ? 0 : PROGRESS_STEPS[currentStepIndex - 1].progress;
-      const endProgress = step.progress;
-      const duration = step.duration;
-      const startTime = Date.now();
-
-      const animateProgress = () => {
-        const elapsed = Date.now() - startTime;
-        const progressRatio = Math.min(elapsed / duration, 1);
-        const currentProgress = startProgress + (endProgress - startProgress) * progressRatio;
-        
-        setProgress(currentProgress);
-
-        if (progressRatio < 1) {
-          requestAnimationFrame(animateProgress);
-        } else {
-          // Move to next step after a short delay
-          currentStepIndex++;
-          timeoutId = setTimeout(runStep, 200);
-        }
-      };
-
-      animateProgress();
-    };
-
-    runStep();
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isVisible, onComplete]);
+      }, 500); // Small delay for smooth UX
+    }
+  }, [isVisible, apiProgress, onComplete]);
 
   if (!isVisible) return null;
 
@@ -124,10 +101,10 @@ export function SearchProgress({ isVisible, onComplete }: SearchProgressProps) {
 
           {/* Linear Progress Bar */}
           <div className="space-y-3">
-            <InlineProgress value={progress} />
+            <InlineProgress value={displayProgress} />
             <div className="flex justify-between text-xs text-gray-500">
               <span>0%</span>
-              <span className="font-medium text-blue-600">{Math.round(progress)}%</span>
+              <span className="font-medium text-blue-600">{Math.round(displayProgress)}%</span>
               <span>100%</span>
             </div>
           </div>
@@ -138,7 +115,9 @@ export function SearchProgress({ isVisible, onComplete }: SearchProgressProps) {
               {currentStepData?.text || "Processing..."}
             </p>
             <p className="text-sm text-gray-500">
-              This usually takes 5-10 seconds
+              {displayProgress < 100
+                ? "This usually takes 5-15 seconds"
+                : "Complete! Redirecting now..."}
             </p>
           </div>
 
@@ -148,7 +127,7 @@ export function SearchProgress({ isVisible, onComplete }: SearchProgressProps) {
               <div
                 key={step.id}
                 className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  index <= currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                  index <= currentStep ? "bg-blue-600" : "bg-gray-300"
                 }`}
               />
             ))}

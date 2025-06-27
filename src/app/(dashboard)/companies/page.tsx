@@ -22,9 +22,40 @@ export default function CompaniesPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [searchingCompanyName, setSearchingCompanyName] = useState<string>("");
 
+  // ✅ Add smooth progress states
+  const [apiProgress, setApiProgress] = useState(0);
+  const [targetProgress, setTargetProgress] = useState(0);
+
   // 🆕 Add manual company modal state
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
+
+  // ✅ Smooth progress animation (same as criteria page)
+  useEffect(() => {
+    if (!showProgress) return;
+
+    const interval = setInterval(() => {
+      setApiProgress((prev) => {
+        const diff = targetProgress - prev;
+        if (Math.abs(diff) < 0.1) return targetProgress;
+        return prev + diff * 0.3; // Fast interpolation
+      });
+    }, 30); // Frequent updates
+
+    return () => clearInterval(interval);
+  }, [targetProgress, showProgress]);
+
+  // ✅ Auto-redirect when API completes
+  useEffect(() => {
+    if (apiProgress >= 100 && showProgress) {
+      const timer = setTimeout(() => {
+        setShowProgress(false);
+        router.push("/employees");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [apiProgress, showProgress, router]);
 
   // ✅ Better handling of direct navigation
   useEffect(() => {
@@ -33,9 +64,7 @@ export default function CompaniesPage() {
       router.push("/criteria");
     } else if (!companies?.length && criteria) {
       // Has criteria but no companies - might need to research
-      console.log(
-        "Has criteria but no companies - user might need to research",
-      );
+      console.log("Has criteria but no companies - user might need to research");
     }
   }, [companies, criteria, router]);
 
@@ -56,11 +85,26 @@ export default function CompaniesPage() {
     if (loadingCompanyId) return; // Prevent multiple clicks
 
     setLoadingCompanyId(company.id);
-    setSelectedCompany(company); // Set selected company for state management
+    setSelectedCompany(company);
     setSearchingCompanyName(company.name);
     setShowProgress(true);
+    setTargetProgress(0);
+    setApiProgress(0);
+
+    // ✅ Continuous micro-progress to prevent feeling stuck
+    const microProgressInterval = setInterval(() => {
+      setTargetProgress((prev) => {
+        if (prev < 70) {
+          // Only during API call
+          return prev + 0.5; // Tiny increments every 100ms
+        }
+        return prev;
+      });
+    }, 100);
 
     try {
+      setTargetProgress(15); // Immediate feedback
+
       const response = await fetch("/api/employees/websearch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,6 +116,9 @@ export default function CompaniesPage() {
         }),
       });
 
+      clearInterval(microProgressInterval); // Stop micro-progress
+      setTargetProgress(85); // Jump to near completion
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to fetch employees");
@@ -82,20 +129,17 @@ export default function CompaniesPage() {
 
       // Save the employee results in Zustand
       setEmployees(employeesData.employees || []);
-
-      // Don't navigate immediately - let the progress complete
+      setTargetProgress(100); // ✅ Complete - triggers redirect
     } catch (error) {
       console.error("❌ Error fetching employees:", error);
+      clearInterval(microProgressInterval);
       setShowProgress(false);
+      setTargetProgress(0);
+      setApiProgress(0);
       // Add toast notification here if you have one
     } finally {
       setLoadingCompanyId(null);
     }
-  };
-
-  const handleProgressComplete = () => {
-    setShowProgress(false);
-    router.push("/employees");
   };
 
   // 🆕 Add manual company handler
@@ -127,7 +171,7 @@ export default function CompaniesPage() {
 
   console.log(
     "🔍 DEBUG Companies in frontend:",
-    companies.map((c) => ({ id: c.id, name: c.name })),
+    companies.map((c) => ({ id: c.id, name: c.name }))
   );
 
   if (!companies?.length) {
@@ -145,12 +189,9 @@ export default function CompaniesPage() {
           <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
             <Building2 className="h-8 w-8 text-gray-400" />
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            No Companies Found
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">No Companies Found</h1>
           <p className="text-gray-600 max-w-md mx-auto">
-            We couldn't find any companies matching your criteria. This might be
-            because:
+            We couldn't find any companies matching your criteria. This might be because:
           </p>
           <ul className="text-sm text-gray-500 space-y-1 max-w-md mx-auto">
             <li>• Your search criteria are too specific</li>
@@ -185,12 +226,10 @@ export default function CompaniesPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Companies Matching Your Search
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight">Companies Matching Your Search</h1>
               <p className="text-gray-600">
-                Based on your criteria, we found these companies that are likely
-                hiring now. Click "Find Employees" to continue.
+                Based on your criteria, we found these companies that are likely hiring now. Click
+                "Find Employees" to continue.
               </p>
             </div>
 
@@ -286,21 +325,15 @@ export default function CompaniesPage() {
                     : getRelevanceColor(company.relevanceScore)
                 }`}
               >
-                {isManualEntry(company)
-                  ? "Manual Entry"
-                  : company.relevanceScore}
+                {isManualEntry(company) ? "Manual Entry" : company.relevanceScore}
               </span>
             </div>
 
             {/* Company Info */}
             <div className="space-y-3">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                  {company.name}
-                </h2>
-                <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                  {company.description}
-                </p>
+                <h2 className="text-lg font-semibold text-gray-900 line-clamp-1">{company.name}</h2>
+                <p className="text-sm text-gray-600 line-clamp-2 mt-1">{company.description}</p>
               </div>
 
               {/* Location */}
@@ -355,15 +388,14 @@ export default function CompaniesPage() {
 
       {/* Footer Info */}
       <p className="text-sm text-gray-500 mt-8 text-center">
-        Click "Find Employees" on any company to discover relevant contacts and
-        start your outreach.
+        Click "Find Employees" on any company to discover relevant contacts and start your outreach.
       </p>
 
       {/* Employee Search Progress */}
       <EmployeeSearchProgress
         isVisible={showProgress}
         companyName={searchingCompanyName}
-        onComplete={handleProgressComplete}
+        apiProgress={apiProgress}
       />
     </div>
   );

@@ -3,7 +3,7 @@
  * Uses OpenAI Standard to create personalized email content
  */
 
-import { openai } from "@/lib/openai";
+import { openai } from "@/lib/openai/client";
 import { OPENAI_PROMPTS, OPENAI_CONFIG } from "@/constants/prompts";
 import { parseEmailContent } from "@/lib/openai/utils";
 import { EmailContent, EmailType } from "@/lib/openai/types";
@@ -39,9 +39,7 @@ export interface CreditCheckResult {
  * Generate email content using OpenAI Standard Generation (Chat Completions)
  * This creates personalized email content without web search
  */
-export async function generateEmailContent(
-  params: EmailGenerationParams,
-): Promise<EmailContent> {
+export async function generateEmailContent(params: EmailGenerationParams): Promise<EmailContent> {
   try {
     console.log("✍️ Generating email content for:", params);
 
@@ -91,7 +89,7 @@ export async function generateEmailContent(
   } catch (error) {
     console.error("❌ Error generating email content:", error);
     throw new Error(
-      `Failed to generate email content: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to generate email content: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -101,7 +99,7 @@ export async function generateEmailContent(
  */
 export async function checkUserCredits(
   userId: string,
-  supabase: SupabaseClient,
+  supabase: SupabaseClient
 ): Promise<CreditCheckResult> {
   try {
     const { data: user, error } = await supabase
@@ -136,7 +134,7 @@ export async function checkUserCredits(
  */
 export async function incrementUserCredits(
   userId: string,
-  supabase: SupabaseClient,
+  supabase: SupabaseClient
 ): Promise<void> {
   try {
     // Get current credits
@@ -189,7 +187,7 @@ export async function saveEmailGeneration(
   emailType: string,
   supabase: SupabaseClient,
   generatedEmail?: string,
-  generatedSubject?: string,
+  generatedSubject?: string
 ): Promise<string> {
   try {
     const emailGenerationId = crypto.randomUUID();

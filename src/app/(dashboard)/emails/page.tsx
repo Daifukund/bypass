@@ -3,15 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useSearchStore } from "@/stores/search-store";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  Copy,
-  Mail,
-  Send,
-  Check,
-  AlertCircle,
-  CreditCard,
-} from "lucide-react";
+import { ArrowLeft, Copy, Mail, Send, Check, AlertCircle, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSupabase } from "@/components/supabase-provider";
@@ -29,12 +21,7 @@ interface UserProfile {
 }
 
 export default function EmailsPage() {
-  const {
-    selectedEmployee,
-    selectedCompany,
-    generatedEmail,
-    setGeneratedEmail,
-  } = useSearchStore();
+  const { selectedEmployee, selectedCompany, generatedEmail, setGeneratedEmail } = useSearchStore();
   const supabase = useSupabase();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -116,7 +103,7 @@ export default function EmailsPage() {
   useEffect(() => {
     if (selectedEmployee && selectedCompany) {
       const detectedLanguage = detectLanguageFromLocation(
-        selectedEmployee.location || selectedCompany.location,
+        selectedEmployee.location || selectedCompany.location
       );
       setLanguage(detectedLanguage);
     }
@@ -170,20 +157,13 @@ export default function EmailsPage() {
 
   // Auto-generate email address when component loads
   useEffect(() => {
-    if (
-      selectedEmployee &&
-      selectedCompany &&
-      !guessedEmail &&
-      user &&
-      supabase
-    ) {
+    if (selectedEmployee && selectedCompany && !guessedEmail && user && supabase) {
       generateEmailAddress();
     }
   }, [selectedEmployee, selectedCompany, guessedEmail, user, supabase]);
 
   const generateEmailAddress = async () => {
-    if (!selectedEmployee || !selectedCompany || isGeneratingEmail || !supabase)
-      return;
+    if (!selectedEmployee || !selectedCompany || isGeneratingEmail || !supabase) return;
 
     setIsGeneratingEmail(true);
     setIsLoading(true);
@@ -244,6 +224,22 @@ export default function EmailsPage() {
   const generateEmailContent = async () => {
     if (!selectedEmployee || !selectedCompany) return;
 
+    console.log("🔍 Debug - selectedEmployee:", selectedEmployee);
+    console.log("🔍 Debug - selectedCompany:", selectedCompany);
+
+    const requestData = {
+      contactName: selectedEmployee.fullName, // ✅ Use only fullName (no fallback needed)
+      jobTitle: selectedEmployee.jobTitle, // ✅ Use only jobTitle (no fallback needed)
+      companyName: selectedCompany.name,
+      location: selectedEmployee.location,
+      emailType: emailType,
+      language: language,
+      companyId: selectedCompany.id,
+      employeeId: selectedEmployee.id,
+    };
+
+    console.log("🔍 Debug - request data:", requestData);
+
     setIsLoading(true);
 
     try {
@@ -252,17 +248,11 @@ export default function EmailsPage() {
         headers: {
           "Content-Type": "application/json; charset=utf-8",
         },
-        body: JSON.stringify({
-          contactName: selectedEmployee.fullName,
-          jobTitle: selectedEmployee.jobTitle,
-          companyName: selectedCompany.name,
-          location: selectedEmployee.location,
-          emailType: emailType,
-          language: language,
-          companyId: selectedCompany.id,
-          employeeId: selectedEmployee.id,
-        }),
+        body: JSON.stringify(requestData),
       });
+
+      console.log("🔍 Debug - response status:", response.status);
+      console.log("🔍 Debug - response ok:", response.ok);
 
       if (response.ok) {
         const result = await response.json();
@@ -319,13 +309,8 @@ export default function EmailsPage() {
       if (generatedEmail.startsWith("Subject:")) {
         const lines = generatedEmail.split("\n");
         subject = lines[0].replace("Subject:", "").trim();
-        const bodyStartIndex = lines.findIndex(
-          (line, index) => index > 0 && line.trim() !== "",
-        );
-        body =
-          bodyStartIndex >= 0
-            ? lines.slice(bodyStartIndex).join("\n").trim()
-            : "";
+        const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
+        body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
       } else {
         subject = `Invitation à un échange informel`;
         body = generatedEmail;
@@ -382,13 +367,8 @@ export default function EmailsPage() {
         if (generatedEmail.startsWith("Subject:")) {
           const lines = generatedEmail.split("\n");
           subject = lines[0].replace("Subject:", "").trim();
-          const bodyStartIndex = lines.findIndex(
-            (line, index) => index > 0 && line.trim() !== "",
-          );
-          body =
-            bodyStartIndex >= 0
-              ? lines.slice(bodyStartIndex).join("\n").trim()
-              : "";
+          const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
+          body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
         } else {
           subject = `Regarding opportunities at ${selectedCompany?.name}`;
           body = generatedEmail;
@@ -400,12 +380,12 @@ export default function EmailsPage() {
         .writeText(`To: ${guessedEmail}\nSubject: ${subject}\n\n${body}`)
         .then(() => {
           alert(
-            "Could not open email client. Email details have been copied to clipboard. Please paste into your email client manually.",
+            "Could not open email client. Email details have been copied to clipboard. Please paste into your email client manually."
           );
         })
         .catch(() => {
           alert(
-            `Could not open email client. Please copy this information manually:\n\nTo: ${guessedEmail}\nSubject: ${subject}\n\n${body}`,
+            `Could not open email client. Please copy this information manually:\n\nTo: ${guessedEmail}\nSubject: ${subject}\n\n${body}`
           );
         });
     }
@@ -508,8 +488,7 @@ export default function EmailsPage() {
         </Link>
         <h1 className="text-3xl font-bold">Generate Your Email</h1>
         <p className="text-gray-600 mt-2">
-          Contacting{" "}
-          <span className="font-medium">{selectedEmployee.fullName}</span> at{" "}
+          Contacting <span className="font-medium">{selectedEmployee.fullName}</span> at{" "}
           <span className="font-medium">{selectedCompany.name}</span>
         </p>
       </div>
@@ -553,12 +532,9 @@ export default function EmailsPage() {
         ) : guessedEmail ? (
           <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
             <div>
-              <p className="font-mono text-lg font-medium text-green-900">
-                {guessedEmail}
-              </p>
+              <p className="font-mono text-lg font-medium text-green-900">{guessedEmail}</p>
               <p className="text-sm text-green-700">
-                Confidence score: {confidence}% • Email address generated
-                successfully
+                Confidence score: {confidence}% • Email address generated successfully
               </p>
             </div>
             <Button
@@ -585,10 +561,7 @@ export default function EmailsPage() {
             <p className="text-gray-600 mb-4">No email address generated yet</p>
             <Button
               onClick={generateEmailAddress}
-              disabled={
-                (!isPremium && emailCreditsUsed >= maxFreeCredits) ||
-                isGeneratingEmail
-              }
+              disabled={(!isPremium && emailCreditsUsed >= maxFreeCredits) || isGeneratingEmail}
             >
               {!isPremium && emailCreditsUsed >= maxFreeCredits
                 ? "Upgrade to Generate More"
@@ -641,9 +614,7 @@ export default function EmailsPage() {
                   className="mt-1"
                 />
                 <div>
-                  <h4 className="font-medium">
-                    {getEmailTypeLabel(type.value)}
-                  </h4>
+                  <h4 className="font-medium">{getEmailTypeLabel(type.value)}</h4>
                   <p className="text-sm text-gray-600 mt-1">
                     {getEmailTypeDescription(type.value)}
                   </p>
@@ -680,18 +651,13 @@ export default function EmailsPage() {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            Language auto-detected based on company location. You can change it
-            above.
+            Language auto-detected based on company location. You can change it above.
           </p>
         </div>
 
         {/* Generate Email Button */}
         <div className="mb-6">
-          <Button
-            onClick={generateEmailContent}
-            disabled={isLoading}
-            className="w-full sm:w-auto"
-          >
+          <Button onClick={generateEmailContent} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading
               ? "Generating Email Content..."
               : `Generate Email Content in ${language} (Free)`}
@@ -714,10 +680,7 @@ export default function EmailsPage() {
               placeholder="Your generated email content will appear here..."
             />
             <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => copyToClipboard(generatedEmail, "content")}
-              >
+              <Button variant="outline" onClick={() => copyToClipboard(generatedEmail, "content")}>
                 {contentCopied ? (
                   <>
                     <Check className="h-4 w-4 mr-2" />
@@ -741,9 +704,7 @@ export default function EmailsPage() {
         ) : (
           <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
             <Mail className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-600">
-              Generate email content to get started
-            </p>
+            <p className="text-gray-600">Generate email content to get started</p>
             <p className="text-sm text-green-600 mt-1">Free and unlimited</p>
           </div>
         )}
