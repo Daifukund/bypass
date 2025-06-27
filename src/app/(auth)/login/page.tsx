@@ -96,6 +96,8 @@ export default function LoginPage() {
     }
   }
 
+  // Comment out the Google login function (around line 99)
+  /*
   async function handleGoogleLogin() {
     if (!supabase) {
       setError("Authentication service not available. Please refresh the page.");
@@ -124,6 +126,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+  */
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && email && password && !loading && supabase) {
@@ -286,6 +289,7 @@ export default function LoginPage() {
             </button>
 
             {/* Divider */}
+            {/*
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -294,8 +298,10 @@ export default function LoginPage() {
                 <span className="px-2 bg-white text-gray-500">or</span>
               </div>
             </div>
+            */}
 
             {/* Google Login */}
+            {/*
             <button
               type="button"
               onClick={handleGoogleLogin}
@@ -322,6 +328,7 @@ export default function LoginPage() {
               </svg>
               Continue with Google
             </button>
+            */}
           </form>
 
           {/* Links */}

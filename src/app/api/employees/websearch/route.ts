@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { EmployeeSearchService } from "@/lib/openai";
+import crypto from "crypto";
 
 // Type guard function to check if object is an employee
 function isEmployeeObject(obj: any): obj is { full_name: string; [key: string]: any } {

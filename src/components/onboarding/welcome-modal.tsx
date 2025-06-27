@@ -75,12 +75,8 @@ export function WelcomeModal({ isOpen, onClose, userName }: WelcomeModalProps) {
                   <span className="text-green-600 text-sm font-bold">✓</span>
                 </div>
                 <div>
-                  <p className="text-gray-800 font-medium">
-                    Tell us your job preferences
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    Define your dream role and industry
-                  </p>
+                  <p className="text-gray-800 font-medium">Tell us your job preferences</p>
+                  <p className="text-gray-600 text-sm">Define your dream role and industry</p>
                 </div>
               </div>
 
@@ -89,9 +85,7 @@ export function WelcomeModal({ isOpen, onClose, userName }: WelcomeModalProps) {
                   <span className="text-green-600 text-sm font-bold">✓</span>
                 </div>
                 <div>
-                  <p className="text-gray-800 font-medium">
-                    We find companies and real contacts
-                  </p>
+                  <p className="text-gray-800 font-medium">We find companies and real contacts</p>
                   <p className="text-gray-600 text-sm">
                     AI discovers hiring companies + decision makers
                   </p>
@@ -106,34 +100,32 @@ export function WelcomeModal({ isOpen, onClose, userName }: WelcomeModalProps) {
                   <p className="text-gray-800 font-medium">
                     You send a killer email (we write it for you)
                   </p>
-                  <p className="text-gray-600 text-sm">
-                    Personalized messages that get responses
-                  </p>
+                  <p className="text-gray-600 text-sm">Personalized messages that get responses</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="text-center mb-6">
-            <p className="text-gray-600 text-sm">
-              Let's skip the job board ghosting 👻
-            </p>
+            <p className="text-gray-600 text-sm">Let's skip the job board ghosting 👻</p>
           </div>
 
-          {/* CTA Button */}
-          <Button
-            onClick={handleCompleteProfile}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
-          >
-            Complete Profile First
-          </Button>
+          {/* CTA Buttons */}
+          <div className="space-y-3">
+            <Button
+              onClick={handleCompleteProfile}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
+            >
+              Complete Profile First
+            </Button>
 
-          <Button
-            onClick={handleStartSearch}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
-          >
-            Start Job Search
-          </Button>
+            <Button
+              onClick={handleStartSearch}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 text-lg"
+            >
+              Start Job Search
+            </Button>
+          </div>
 
           {/* Trust signal */}
           <div className="text-center mt-4">

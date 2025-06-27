@@ -19,6 +19,7 @@ import {
   Globe,
   Linkedin,
   Zap,
+  ArrowLeft,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -70,10 +71,7 @@ export default function ProfilePage() {
   const currentEmailCreditsUsed = profile?.email_credits || 0;
   const currentMaxFreeCredits = 5;
   const currentIsPremium = profile?.plan === "premium";
-  const creditsRemaining = Math.max(
-    0,
-    currentMaxFreeCredits - currentEmailCreditsUsed,
-  );
+  const creditsRemaining = Math.max(0, currentMaxFreeCredits - currentEmailCreditsUsed);
 
   // Initialize user data on component mount
   useEffect(() => {
@@ -108,9 +106,7 @@ export default function ProfilePage() {
           try {
             await initializeUser(supabase);
           } catch (initError) {
-            console.log(
-              "Store initialization failed, continuing with local state",
-            );
+            console.log("Store initialization failed, continuing with local state");
           }
         }
 
@@ -304,9 +300,7 @@ export default function ProfilePage() {
         <div className="text-center max-w-md">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <h2 className="text-xl font-bold text-red-800 mb-2">Profile Error</h2>
-          <p className="text-red-600 mb-4">
-            {error || "Authentication service not available"}
-          </p>
+          <p className="text-red-600 mb-4">{error || "Authentication service not available"}</p>
           <Button onClick={() => window.location.reload()}>Refresh Page</Button>
         </div>
       </div>
@@ -331,14 +325,22 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
+      {/* Back to Dashboard Button */}
+      <Button
+        onClick={() => router.push("/dashboard")}
+        variant="ghost"
+        size="sm"
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-700">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-600 underline text-sm mt-2"
-          >
+          <button onClick={() => setError(null)} className="text-red-600 underline text-sm mt-2">
             Dismiss
           </button>
         </div>
@@ -351,12 +353,8 @@ export default function ProfilePage() {
             <User className="h-8 w-8 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Profile Settings
-            </h1>
-            <p className="text-gray-600">
-              Manage your account, plan, and email credits
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+            <p className="text-gray-600">Manage your account, plan, and email credits</p>
           </div>
         </div>
       </div>
@@ -366,15 +364,9 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Personal Information
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
               {!isEditing ? (
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                   Edit Profile
                 </Button>
               ) : (
@@ -477,9 +469,7 @@ export default function ProfilePage() {
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   disabled={!isEditing}
                   className="mt-1"
                 />
@@ -525,9 +515,7 @@ export default function ProfilePage() {
         <div className="space-y-6">
           {/* Account Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              Account Information
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Account Information</h3>
             <div className="space-y-6">
               {/* Email Address */}
               <div className="flex items-start justify-between">
@@ -536,9 +524,7 @@ export default function ProfilePage() {
                     <Mail className="h-4 w-4 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Email Address
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Email Address</p>
                     <p className="text-sm text-gray-600">{user?.email}</p>
                   </div>
                 </div>
@@ -557,9 +543,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Current Plan
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Current Plan</p>
                     <div className="flex items-center space-x-2">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -570,9 +554,7 @@ export default function ProfilePage() {
                       >
                         {currentIsPremium ? "Premium" : "Freemium"}
                       </span>
-                      {currentIsPremium && (
-                        <Zap className="h-3 w-3 text-yellow-500" />
-                      )}
+                      {currentIsPremium && <Zap className="h-3 w-3 text-yellow-500" />}
                     </div>
                   </div>
                 </div>
@@ -605,20 +587,14 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Email Credits
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Email Credits</p>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600">
                         {currentIsPremium ? (
-                          <span className="text-green-600 font-medium">
-                            Unlimited
-                          </span>
+                          <span className="text-green-600 font-medium">Unlimited</span>
                         ) : (
                           <>
-                            <span className="font-medium">
-                              {currentEmailCreditsUsed}
-                            </span>
+                            <span className="font-medium">{currentEmailCreditsUsed}</span>
                             <span className="text-gray-400">/</span>
                             <span>{currentMaxFreeCredits}</span>
                             <span className="text-gray-500">used</span>
@@ -633,9 +609,7 @@ export default function ProfilePage() {
                               : "bg-yellow-100 text-yellow-700"
                           }`}
                         >
-                          {creditsRemaining === 0
-                            ? "No credits left"
-                            : `${creditsRemaining} left`}
+                          {creditsRemaining === 0 ? "No credits left" : `${creditsRemaining} left`}
                         </span>
                       )}
                     </div>
@@ -650,9 +624,7 @@ export default function ProfilePage() {
                     <Calendar className="h-4 w-4 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Account Created
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">Account Created</p>
                     <p className="text-sm text-gray-600">{createdAt}</p>
                   </div>
                 </div>
@@ -662,15 +634,10 @@ export default function ProfilePage() {
 
           {/* Actions */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Actions
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
             <div className="space-y-3">
               {!currentIsPremium && (
-                <Button
-                  className="w-full"
-                  onClick={() => router.push("/upgrade")}
-                >
+                <Button className="w-full" onClick={() => router.push("/upgrade")}>
                   <Crown className="h-4 w-4 mr-2" />
                   Upgrade to Premium
                 </Button>
@@ -693,19 +660,12 @@ export default function ProfilePage() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Delete Account
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Account</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete your account? This action cannot
-              be undone.
+              Are you sure you want to delete your account? This action cannot be undone.
             </p>
             <div className="flex space-x-3">
-              <Button
-                variant="destructive"
-                onClick={handleDeleteAccount}
-                className="flex-1"
-              >
+              <Button variant="destructive" onClick={handleDeleteAccount} className="flex-1">
                 Delete Account
               </Button>
               <Button

@@ -32,7 +32,7 @@ async function createClient() {
           return cookieStore.get(name)?.value;
         },
       },
-    },
+    }
   );
 }
 
@@ -58,6 +58,26 @@ function extractAndParseJSON(text: string): LinkedInEmployee[] | null {
     }
     return null;
   }
+}
+
+// Add this function after extractAndParseJSON function
+function validateAndCleanEmployee(emp: LinkedInEmployee): LinkedInEmployee | null {
+  // Skip if name is incomplete (has initials only)
+  const name = emp.full_name || emp.fullName || emp.name || "";
+  if (!name || name.length < 3 || /^[A-Z]\.\s*[A-Z]\.?$/.test(name)) {
+    return null;
+  }
+
+  // Clean job title (remove extra info after | or •)
+  let jobTitle = emp.job_title || emp.jobTitle || emp.title || "";
+  jobTitle = jobTitle.split("|")[0].split("•")[0].trim();
+
+  return {
+    ...emp,
+    full_name: name,
+    job_title: jobTitle,
+    location: emp.location && emp.location !== "Not specified" ? emp.location : "",
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -89,7 +109,7 @@ export async function POST(req: NextRequest) {
             location: body.location,
           },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -118,26 +138,21 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new company record
       companyId = crypto.randomUUID();
-      const { error: companyError } = await supabase
-        .from("company_suggestions")
-        .insert({
-          id: companyId,
-          user_id: user.id,
-          search_criteria_id: null, // No search criteria for manual paste
-          name: body.companyName,
-          description: `Company added via LinkedIn paste`,
-          location: body.location || "Unknown",
-          relevanceScore: "Manual Entry",
-          source: "LinkedIn Paste",
-          created_at: new Date().toISOString(),
-        });
+      const { error: companyError } = await supabase.from("company_suggestions").insert({
+        id: companyId,
+        user_id: user.id,
+        search_criteria_id: null, // No search criteria for manual paste
+        name: body.companyName,
+        description: `Company added via LinkedIn paste`,
+        location: body.location || "Unknown",
+        relevanceScore: "Manual Entry",
+        source: "LinkedIn Paste",
+        created_at: new Date().toISOString(),
+      });
 
       if (companyError) {
         console.error("❌ Error creating company:", companyError);
-        return NextResponse.json(
-          { error: "Failed to create company record" },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: "Failed to create company record" }, { status: 500 });
       }
 
       console.log("✅ Created new company:", companyId);
@@ -148,10 +163,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "OpenAI not available",
-          message:
-            "AI service is temporarily unavailable. Please try again later.",
+          message: "AI service is temporarily unavailable. Please try again later.",
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -161,10 +175,7 @@ export async function POST(req: NextRequest) {
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       // Use OpenAI to analyze the LinkedIn content
-      const prompt = OPENAI_PROMPTS.LINKEDIN_PASTE_ANALYSIS(
-        body.content,
-        body.companyName,
-      );
+      const prompt = OPENAI_PROMPTS.LINKEDIN_PASTE_ANALYSIS(body.content, body.companyName);
 
       console.log("📤 Sending LinkedIn paste analysis request to OpenAI");
       console.log("📝 Prompt preview:", prompt.substring(0, 300) + "...");
@@ -210,33 +221,28 @@ export async function POST(req: NextRequest) {
 
       // ✅ Transform and SAVE employees to database
       const employeesToInsert = rawEmployees
-        .filter(
-          (emp) =>
-            emp &&
-            typeof emp === "object" &&
-            (emp.full_name || emp.fullName || emp.name),
-        )
+        .map(validateAndCleanEmployee) // Apply validation first
+        .filter((emp): emp is LinkedInEmployee => emp !== null) // Remove null results
         .map((emp: LinkedInEmployee) => ({
           id: crypto.randomUUID(),
           user_id: user.id,
-          company_id: companyId, // ✅ Real company ID
+          company_id: companyId,
           name: emp.full_name || emp.fullName || emp.name || "Unknown",
           title: emp.job_title || emp.jobTitle || emp.title || "Unknown",
           location:
-            emp.location && emp.location !== "Unknown" && emp.location.trim()
+            emp.location &&
+            emp.location !== "Unknown" &&
+            emp.location.trim() &&
+            emp.location !== "Not specified"
               ? emp.location
-              : body.location || "Unknown",
+              : body.location || "Not specified",
           linkedinUrl: emp.linkedin_url || emp.linkedinUrl || "",
-          relevanceScore:
-            emp.relevance_score || emp.relevanceScore || "Average Contact",
+          relevanceScore: emp.relevance_score || emp.relevanceScore || "Good Contact",
           source: "LinkedIn Paste",
           created_at: new Date().toISOString(),
         }));
 
-      console.log(
-        "💾 Inserting employees to database:",
-        employeesToInsert.length,
-      );
+      console.log("💾 Inserting employees to database:", employeesToInsert.length);
 
       // ✅ Save employees to database
       const { error: employeesError } = await supabase
@@ -245,10 +251,7 @@ export async function POST(req: NextRequest) {
 
       if (employeesError) {
         console.error("❌ Employees save error:", employeesError);
-        return NextResponse.json(
-          { error: "Failed to save employees" },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: "Failed to save employees" }, { status: 500 });
       }
 
       console.log("✅ Employees saved to database successfully");
@@ -268,6 +271,11 @@ export async function POST(req: NextRequest) {
         success: true,
         employees: transformedEmployees,
         total: transformedEmployees.length,
+        quality: {
+          withCompleteNames: transformedEmployees.filter((e) => !e.name.includes(".")).length,
+          withLocations: transformedEmployees.filter((e) => e.location !== "Not specified").length,
+          withLinkedIn: transformedEmployees.filter((e) => e.linkedinUrl).length,
+        },
         message: `Extracted ${transformedEmployees.length} employees from LinkedIn content${body.location ? ` in ${body.location}` : ""}`,
       };
 
@@ -281,12 +289,9 @@ export async function POST(req: NextRequest) {
           error: "Unable to analyze LinkedIn content",
           message:
             "Our AI service encountered an error while analyzing the content. Please try again or check that you copied valid LinkedIn search results.",
-          details:
-            process.env.NODE_ENV === "development"
-              ? String(openaiError)
-              : undefined,
+          details: process.env.NODE_ENV === "development" ? String(openaiError) : undefined,
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
   } catch (error) {
@@ -296,10 +301,9 @@ export async function POST(req: NextRequest) {
       {
         error: "Internal server error",
         message: "An unexpected error occurred while processing your request.",
-        details:
-          process.env.NODE_ENV === "development" ? String(error) : undefined,
+        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

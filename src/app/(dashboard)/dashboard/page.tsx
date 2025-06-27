@@ -15,7 +15,7 @@ interface SearchHistoryItem {
   contact_title: string;
   email: string;
   date: string;
-  status: 'Email sent' | 'Not sent';
+  status: "Email sent" | "Not sent";
 }
 
 export default function DashboardPage() {
@@ -23,15 +23,15 @@ export default function DashboardPage() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   // Use app store (already initialized by layout)
-  const { 
-    user, 
-    profile, 
+  const {
+    user,
+    profile,
     emailCreditsUsed,
     maxFreeCredits,
     isPremium,
@@ -39,10 +39,10 @@ export default function DashboardPage() {
     showWelcomeModal,
     setShowWelcomeModal,
     setHasCompletedOnboarding,
-    hasCompletedOnboarding
+    hasCompletedOnboarding,
   } = useAppStore();
 
-  const { setCriteria } = useSearchStore();
+  const { setCriteria, startNewSearch } = useSearchStore();
 
   // Pagination calculations
   const totalItems = searchHistory.length;
@@ -58,35 +58,35 @@ export default function DashboardPage() {
 
   // Function to update email status
   const updateEmailStatus = async (emailId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'Email sent' ? 'pending' : 'sent';
+    const newStatus = currentStatus === "Email sent" ? "pending" : "sent";
     setUpdatingStatus(emailId);
-    
+
     try {
-      const response = await fetch('/api/emails/update-status', {
-        method: 'PATCH',
+      const response = await fetch("/api/emails/update-status", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           emailId,
-          status: newStatus
+          status: newStatus,
         }),
       });
 
       if (response.ok) {
         // Update the local state
-        setSearchHistory(prev => 
-          prev.map(record => 
-            record.id === emailId 
-              ? { ...record, status: newStatus === 'sent' ? 'Email sent' : 'Not sent' }
+        setSearchHistory((prev) =>
+          prev.map((record) =>
+            record.id === emailId
+              ? { ...record, status: newStatus === "sent" ? "Email sent" : "Not sent" }
               : record
           )
         );
       } else {
-        console.error('Failed to update email status');
+        console.error("Failed to update email status");
       }
     } catch (error) {
-      console.error('Error updating email status:', error);
+      console.error("Error updating email status:", error);
     } finally {
       setUpdatingStatus(null);
     }
@@ -98,15 +98,15 @@ export default function DashboardPage() {
 
     const fetchSearchHistory = async () => {
       setHistoryLoading(true);
-      
+
       try {
-        const response = await fetch('/api/search-history');
+        const response = await fetch("/api/search-history");
         if (response.ok) {
           const data = await response.json();
           setSearchHistory(data.searchHistory || []);
         }
       } catch (error) {
-        console.error('Error fetching search history:', error);
+        console.error("Error fetching search history:", error);
         // Don't block the UI for non-critical data
       } finally {
         setHistoryLoading(false);
@@ -121,13 +121,13 @@ export default function DashboardPage() {
     return null; // Layout will redirect to login
   }
 
-  const userName = profile?.first_name 
-    ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-    : user?.email?.split('@')[0] || 'User';
+  const userName = profile?.first_name
+    ? `${profile.first_name} ${profile.last_name || ""}`.trim()
+    : user?.email?.split("@")[0] || "User";
 
   const getProfileCompletionPercentage = () => {
     if (!profile) return 0;
-    
+
     const fields = [
       profile.first_name,
       profile.last_name,
@@ -137,8 +137,8 @@ export default function DashboardPage() {
       profile.phone,
       profile.linkedin,
     ];
-    
-    const completedFields = fields.filter(field => field && field.trim() !== "").length;
+
+    const completedFields = fields.filter((field) => field && field.trim() !== "").length;
     return Math.round((completedFields / fields.length) * 100);
   };
 
@@ -150,35 +150,39 @@ export default function DashboardPage() {
   useEffect(() => {
     // Force onboarding check for users without a profile or very new users
     if (user && !showWelcomeModal) {
-      const shouldShowOnboarding = !profile || 
-        (profile.created_at && new Date(profile.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)) ||
+      const shouldShowOnboarding =
+        !profile ||
+        (profile.created_at &&
+          new Date(profile.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)) ||
         !hasCompletedOnboarding;
-      
+
       if (shouldShowOnboarding && !hasCompletedOnboarding) {
-        console.log('🎯 Forcing onboarding modal for new user');
+        console.log("🎯 Forcing onboarding modal for new user");
         setShowWelcomeModal(true);
       }
     }
   }, [user, profile, showWelcomeModal, hasCompletedOnboarding, setShowWelcomeModal]);
+
+  // Add handler for Start New Search
+  const handleStartNewSearch = () => {
+    startNewSearch(); // Clear the Zustand store
+    router.push("/criteria"); // Navigate to criteria page
+  };
 
   return (
     <>
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={handleWelcomeModalClose}
-        userName={profile?.first_name || user?.email?.split('@')[0]}
+        userName={profile?.first_name || user?.email?.split("@")[0]}
       />
-      
+
       <div className="space-y-6">
         {/* Compact Header with Status */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {userName} 👋
-            </h1>
-            <p className="text-gray-600">
-              Ready to skip the job board queue?
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName} 👋</h1>
+            <p className="text-gray-600">Ready to skip the job board queue?</p>
           </div>
 
           {/* Compact Status Indicators */}
@@ -208,17 +212,17 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="text-blue-600 hover:text-blue-700 p-0 h-auto font-medium"
-                  onClick={() => router.push('/profile')}
+                  onClick={() => router.push("/profile")}
                 >
                   Complete profile
                 </Button>
               </div>
             )}
-            
+
             {/* Premium/Credits Status - Compact */}
             <div className="flex items-center gap-2">
               {isPremium ? (
@@ -233,10 +237,10 @@ export default function DashboardPage() {
                     {creditsRemaining}/{maxFreeCredits} credits
                   </span>
                   {creditsRemaining <= 1 && (
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       className="h-6 px-2 text-xs ml-1"
-                      onClick={() => router.push('/upgrade')}
+                      onClick={() => router.push("/upgrade")}
                     >
                       Upgrade
                     </Button>
@@ -251,28 +255,27 @@ export default function DashboardPage() {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold mb-2">
-                🎯 Find Your Next Opportunity
-              </h2>
+              <h2 className="text-xl font-semibold mb-2">🎯 Find Your Next Opportunity</h2>
               <p className="text-blue-100 text-sm">
-                Discover companies actively hiring for your profile and get direct contact with decision makers.
+                Discover companies actively hiring for your profile and get direct contact with
+                decision makers.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
+              <Button
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-lg"
-                onClick={() => router.push('/criteria')}
+                onClick={handleStartNewSearch}
               >
                 <Search className="mr-2 h-5 w-5" />
                 Start New Search
               </Button>
-              
-              <Button 
+
+              <Button
                 size="lg"
                 variant="outline"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold"
-                onClick={() => router.push('/find-email')}
+                onClick={() => router.push("/find-email")}
               >
                 <Mail className="mr-2 h-5 w-5" />
                 Find Email Address
@@ -293,7 +296,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          
+
           <div className="overflow-x-auto">
             {historyLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -326,18 +329,14 @@ export default function DashboardPage() {
                     {currentItems.map((record) => (
                       <tr key={record.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {record.company}
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{record.company}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{record.contact}</div>
                           <div className="text-sm text-gray-500">{record.contact_title}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 font-mono">
-                            {record.email}
-                          </div>
+                          <div className="text-sm text-gray-900 font-mono">{record.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(record.date).toLocaleDateString()}
@@ -347,10 +346,10 @@ export default function DashboardPage() {
                             onClick={() => updateEmailStatus(record.id, record.status)}
                             disabled={updatingStatus === record.id}
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors hover:opacity-80 ${
-                              record.status === 'Email sent' 
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                            } ${updatingStatus === record.id ? 'opacity-50' : ''}`}
+                              record.status === "Email sent"
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                            } ${updatingStatus === record.id ? "opacity-50" : ""}`}
                             title="Click to toggle status"
                           >
                             {updatingStatus === record.id ? (
@@ -367,7 +366,7 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
-                
+
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -376,14 +375,14 @@ export default function DashboardPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
                           className="h-8"
                         >
                           <ChevronLeft className="h-4 w-4 mr-1" />
                           Previous
                         </Button>
-                        
+
                         <div className="flex items-center gap-1">
                           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                             <Button
@@ -397,11 +396,11 @@ export default function DashboardPage() {
                             </Button>
                           ))}
                         </div>
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
                           className="h-8"
                         >
@@ -409,7 +408,7 @@ export default function DashboardPage() {
                           <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </div>
-                      
+
                       <div className="text-sm text-gray-500">
                         Page {currentPage} of {totalPages}
                       </div>
@@ -422,13 +421,13 @@ export default function DashboardPage() {
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <Mail className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No email addresses generated yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No email addresses generated yet
+                </h3>
                 <p className="text-gray-500 mb-6">
                   Complete your first search and generate email addresses to see them here.
                 </p>
-                <Button onClick={() => router.push('/criteria')}>
-                  Start Your First Search
-                </Button>
+                <Button onClick={handleStartNewSearch}>Start Your First Search</Button>
               </div>
             )}
           </div>
@@ -446,8 +445,9 @@ export default function DashboardPage() {
                   Pro Tip: Quality over Quantity
                 </h3>
                 <p className="text-indigo-700 text-sm leading-relaxed">
-                  Instead of sending 100+ generic applications, focus on 10-20 highly targeted contacts. 
-                  Our AI helps you find the right people and craft personalized messages that get responses.
+                  Instead of sending 100+ generic applications, focus on 10-20 highly targeted
+                  contacts. Our AI helps you find the right people and craft personalized messages
+                  that get responses.
                 </p>
                 <div className="mt-3 flex items-center gap-4 text-xs text-indigo-600">
                   <span>📈 3.2x more interviews</span>

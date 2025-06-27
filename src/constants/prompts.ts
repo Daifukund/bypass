@@ -339,60 +339,43 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
    * LinkedIn Paste Analysis Prompt
    * Used for extracting employee data from pasted LinkedIn content
    */
-  LINKEDIN_PASTE_ANALYSIS: (
-    content: string,
-    companyName: string
-  ): string => `You are a LinkedIn content analyzer. Extract employee information from the following pasted LinkedIn search results.
+  LINKEDIN_PASTE_ANALYSIS: (content: string, companyName: string): string => `
+You are a LinkedIn content analyzer. Extract ONLY real employees from pasted LinkedIn search results.
 
 Company: ${companyName}
 
 PASTED CONTENT:
 ${content}
 
-🎯 TASK: Extract all real employees mentioned in this content who work at "${companyName}".
+🎯 EXTRACTION RULES:
+1. Only extract profiles with COMPLETE first and last names
+2. Skip profiles with incomplete names (e.g., "John D.", "Sarah K.")
+3. Clean job titles - remove extra information after "|" or "•"
+4. Extract city/country from location fields
+5. Only include LinkedIn URLs if clearly visible
 
-✅ EXTRACT THESE FIELDS:
-- Full name (first name + last name)
-- Job title/position
-- Location (city, country)
-- LinkedIn profile URL (if visible)
+📝 COMMON LINKEDIN FORMATS TO RECOGNIZE:
+- "John Smith\nMarketing Manager\nParis, France\nConnect"
+- "Jane Doe • Senior Analyst at Company • London, UK"
+- "Mike Johnson | Product Manager | New York, NY"
 
-🔍 LOOK FOR PATTERNS LIKE:
-- "John Smith • Marketing Manager at ${companyName}"
-- "Jane Doe\nSenior Analyst\nParis, France"
-- Names followed by job titles and company references
-- LinkedIn profile URLs (linkedin.com/in/...)
-
-📊 RELEVANCE SCORING:
-- "Perfect Contact" = Exact role match or very similar position
-- "Good Contact" = Same department or related role
-- "Average Contact" = Works at the company but different department
-
-🚫 IGNORE:
-- Generic company information
-- Job postings or advertisements
-- Incomplete profiles without names
-- Non-employee content (ads, suggestions, etc.)
-
-🎯 OUTPUT FORMAT - Return ONLY this JSON array:
+✅ RETURN FORMAT - ONLY this JSON:
 [
   {
-    "full_name": "John Smith",
-    "job_title": "Marketing Manager",
-    "location": "Paris, France",
-    "linkedin_url": "https://linkedin.com/in/johnsmith",
+    "full_name": "Complete First Last Name Only",
+    "job_title": "Clean Job Title Only", 
+    "location": "City, Country",
+    "linkedin_url": "URL if visible or empty string",
     "relevance_score": "Good Contact"
   }
 ]
 
-CRITICAL RULES:
-- Only extract real people with complete names and job titles
-- If no employees found, return empty array: []
-- Do not invent or hallucinate information
-- LinkedIn URLs only if clearly visible in the content
-- Return ONLY the JSON array, no explanations
-
-Extract employee data now:`,
+🚫 STRICT RULES:
+- Skip incomplete names (initials only)
+- Return empty array [] if no valid employees found
+- No explanations, only JSON array
+- Clean job titles (remove university, credentials, multiple roles)
+`,
 
   /**
    * Email Subject Generation Prompt

@@ -57,7 +57,31 @@ export default function CriteriaPage() {
     excludeCompanies: savedCriteria?.excludeCompanies || "", // ✅ Now supported
   }));
 
-  // ✅ Add "Start New Search" button
+  // ✅ Check URL params to determine if this is a new search
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isNewSearch = urlParams.get("new") === "true";
+
+    if (isNewSearch) {
+      // Clear the store and form when explicitly starting a new search
+      startNewSearch();
+      setCriteriaState({
+        jobTitle: "",
+        location: "",
+        jobType: "",
+        industry: "",
+        jobPlatforms: "",
+        companySize: "",
+        experienceLevel: "",
+        keywords: [],
+        language: "",
+        expectedSalary: "",
+        excludeCompanies: "",
+      });
+    }
+  }, [startNewSearch]);
+
+  // Enhanced handleStartNewSearch function
   const handleStartNewSearch = () => {
     startNewSearch();
     setCriteriaState({
@@ -186,13 +210,27 @@ export default function CriteriaPage() {
     <div className="container mx-auto px-4 pt-0 py-3 max-w-4xl">
       {/* Header */}
       <div className="mb-4">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-2"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Link>
+        <div className="flex items-center justify-between mb-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+
+          {/* Add "Clear Form" button if there are existing criteria */}
+          {savedCriteria && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleStartNewSearch}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Clear Form
+            </Button>
+          )}
+        </div>
 
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">Define Your Job Search Criteria</h1>
