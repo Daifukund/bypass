@@ -109,7 +109,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `https://bypass-eta.vercel.app/auth/callback`,
+          redirectTo: `https://bypass-eta.vercel.app/auth/v1/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",
