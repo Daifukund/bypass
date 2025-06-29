@@ -1,32 +1,57 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Globe, FileText, CheckCircle } from "lucide-react";
+import { Search, Globe, FileText, CheckCircle, Zap } from "lucide-react";
 
 interface SearchProgressProps {
   isVisible: boolean;
   apiProgress?: number;
+  searchMode?: "standard" | "websearch";
   onComplete?: () => void;
 }
 
-const PROGRESS_STEPS = [
+const FAST_PROGRESS_STEPS = [
+  {
+    id: 1,
+    text: "Analyzing your job criteria...",
+    icon: Search,
+    minProgress: 0,
+    maxProgress: 30,
+  },
+  {
+    id: 2,
+    text: "Finding companies from AI knowledge base...",
+    icon: Zap,
+    minProgress: 30,
+    maxProgress: 85,
+  },
+  {
+    id: 3,
+    text: "Preparing your results...",
+    icon: FileText,
+    minProgress: 85,
+    maxProgress: 100,
+  },
+];
+
+const WEBSEARCH_PROGRESS_STEPS = [
   {
     id: 1,
     text: "Analyzing your job search criteria...",
     icon: Search,
     minProgress: 0,
-    maxProgress: 25,
+    maxProgress: 20,
   },
   {
     id: 2,
-    text: "Searching the web for the best-fit companies...",
+    text: "Searching the web for the latest companies...",
     icon: Globe,
-    minProgress: 25,
+    minProgress: 20,
     maxProgress: 70,
   },
   {
     id: 3,
-    text: "Preparing your personalized company list...",
+    text: "Validating and ranking results...",
     icon: FileText,
     minProgress: 70,
     maxProgress: 95,
@@ -54,9 +79,24 @@ function InlineProgress({ value = 0 }: { value: number }) {
   );
 }
 
-export function SearchProgress({ isVisible, apiProgress = 0, onComplete }: SearchProgressProps) {
+export function SearchProgress({
+  isVisible,
+  apiProgress = 0,
+  searchMode = "standard",
+  onComplete,
+}: SearchProgressProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [displayProgress, setDisplayProgress] = useState(0);
+
+  // 🆕 Choose steps based on mode
+  const PROGRESS_STEPS =
+    searchMode === "websearch" ? WEBSEARCH_PROGRESS_STEPS : FAST_PROGRESS_STEPS;
+
+  // 🆕 Different timing messages
+  const timingMessage =
+    searchMode === "websearch"
+      ? "This usually takes 10-15 seconds"
+      : "This usually takes 3-5 seconds";
 
   useEffect(() => {
     if (!isVisible) {
@@ -115,9 +155,7 @@ export function SearchProgress({ isVisible, apiProgress = 0, onComplete }: Searc
               {currentStepData?.text || "Processing..."}
             </p>
             <p className="text-sm text-gray-500">
-              {displayProgress < 100
-                ? "This usually takes 5-15 seconds"
-                : "Complete! Redirecting now..."}
+              {displayProgress < 100 ? timingMessage : "Complete! Redirecting now..."}
             </p>
           </div>
 

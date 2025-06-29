@@ -40,6 +40,53 @@ export default function EmailsPage() {
   const [emailBody, setEmailBody] = useState("");
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
+  // ✅ Add state to track if store has been rehydrated
+  const [isStoreReady, setIsStoreReady] = useState(false);
+
+  // ✅ Add debugging at the very beginning
+  console.log("🔍 EmailsPage - Initial selectedEmployee:", selectedEmployee);
+  console.log("🔍 EmailsPage - Initial selectedCompany:", selectedCompany);
+  console.log("🔍 EmailsPage - selectedEmployee type:", typeof selectedEmployee);
+  console.log("🔍 EmailsPage - selectedEmployee keys:", Object.keys(selectedEmployee || {}));
+
+  // ✅ Wait for store rehydration before doing anything
+  useEffect(() => {
+    // Give the store time to rehydrate from localStorage
+    const timer = setTimeout(() => {
+      setIsStoreReady(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ✅ Add debugging to see what's in the store
+  useEffect(() => {
+    if (isStoreReady) {
+      console.log("🔍 Store rehydrated - selectedEmployee:", selectedEmployee);
+      console.log("🔍 Store rehydrated - selectedCompany:", selectedCompany);
+
+      // Check if we have valid data
+      const hasValidEmployee =
+        selectedEmployee &&
+        typeof selectedEmployee === "object" &&
+        Object.keys(selectedEmployee).length > 0;
+
+      const hasValidCompany =
+        selectedCompany &&
+        typeof selectedCompany === "object" &&
+        Object.keys(selectedCompany).length > 0;
+
+      console.log("🔍 Has valid employee:", hasValidEmployee);
+      console.log("🔍 Has valid company:", hasValidCompany);
+
+      // If we don't have valid data after rehydration, redirect
+      if (!hasValidEmployee || !hasValidCompany) {
+        console.log("❌ Invalid or missing data, redirecting to employees page");
+        router.push("/employees");
+      }
+    }
+  }, [isStoreReady, selectedEmployee, selectedCompany, router]);
+
   // Language options
   const languageOptions = [
     { value: "English", label: "English", flag: "🇺🇸" },
@@ -155,35 +202,109 @@ export default function EmailsPage() {
     getUser();
   }, [supabase, router]);
 
-  // Auto-generate email address when component loads
+  // ✅ Only proceed with email generation if store is ready and data is valid
   useEffect(() => {
-    if (selectedEmployee && selectedCompany && !guessedEmail && user && supabase) {
-      generateEmailAddress();
+    if (isStoreReady && selectedEmployee && selectedCompany && !guessedEmail && user && supabase) {
+      // Additional validation before proceeding
+      const hasValidEmployee =
+        selectedEmployee &&
+        typeof selectedEmployee === "object" &&
+        Object.keys(selectedEmployee).length > 0;
+
+      if (hasValidEmployee) {
+        generateEmailAddress();
+      }
     }
-  }, [selectedEmployee, selectedCompany, guessedEmail, user, supabase]);
+  }, [isStoreReady, selectedEmployee, selectedCompany, guessedEmail, user, supabase]);
 
   const generateEmailAddress = async () => {
     if (!selectedEmployee || !selectedCompany || isGeneratingEmail || !supabase) return;
+
+    // ✅ Additional validation to ensure we have real objects, not empty ones
+    if (typeof selectedEmployee !== "object" || Object.keys(selectedEmployee).length === 0) {
+      console.error("❌ selectedEmployee is empty or invalid:", selectedEmployee);
+      setCreditError("Employee data is missing. Please go back and select an employee.");
+      router.push("/employees");
+      return;
+    }
+
+    if (typeof selectedCompany !== "object" || Object.keys(selectedCompany).length === 0) {
+      console.error("❌ selectedCompany is empty or invalid:", selectedCompany);
+      setCreditError("Company data is missing. Please go back and select a company.");
+      router.push("/companies");
+      return;
+    }
+
+    // ✅ Add comprehensive debugging
+    console.log(
+      "🔍 Debug - selectedEmployee full object:",
+      JSON.stringify(selectedEmployee, null, 2)
+    );
+    console.log(
+      "🔍 Debug - selectedCompany full object:",
+      JSON.stringify(selectedCompany, null, 2)
+    );
+
+    // ✅ Handle multiple possible property names for employee name
+    const employeeName =
+      selectedEmployee.fullName || selectedEmployee.name || selectedEmployee.full_name || "";
+
+    const companyName = selectedCompany.name || "";
+
+    console.log("🔍 Debug - employeeName:", `"${employeeName}"`);
+    console.log("🔍 Debug - companyName:", `"${companyName}"`);
+
+    // ✅ Validate required fields before sending
+    if (!employeeName || typeof employeeName !== "string" || !employeeName.trim()) {
+      console.error("❌ Invalid employee name:", {
+        selectedEmployee,
+        fullName: selectedEmployee.fullName,
+        name: selectedEmployee.name,
+        full_name: selectedEmployee.full_name,
+      });
+      setCreditError(
+        "Employee name is missing or invalid. Please go back and select a valid employee."
+      );
+      return;
+    }
+
+    if (!companyName || typeof companyName !== "string" || !companyName.trim()) {
+      console.error("❌ Invalid company name:", selectedCompany);
+      setCreditError(
+        "Company name is missing or invalid. Please go back and select a valid company."
+      );
+      return;
+    }
 
     setIsGeneratingEmail(true);
     setIsLoading(true);
     setCreditError("");
 
     try {
+      const requestBody = {
+        fullName: employeeName.trim(),
+        companyName: companyName.trim(),
+        companyId: selectedCompany.id,
+        employeeId: selectedEmployee.id,
+        jobTitle: (
+          selectedEmployee.jobTitle ||
+          selectedEmployee.title ||
+          selectedEmployee.job_title ||
+          ""
+        ).trim(),
+        location: (selectedEmployee.location || "").trim(),
+      };
+
+      console.log("🔍 Debug - request body being sent:", JSON.stringify(requestBody, null, 2));
+
       const response = await fetch("/api/emails/guess-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: selectedEmployee.fullName,
-          companyName: selectedCompany.name,
-          companyId: selectedCompany.id,
-          employeeId: selectedEmployee.id,
-          jobTitle: selectedEmployee.jobTitle,
-          location: selectedEmployee.location,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
+      console.log("🔍 Debug - API response:", result);
 
       if (response.ok) {
         setGuessedEmail(result.email);
@@ -209,7 +330,7 @@ export default function EmailsPage() {
         setCreditError(result.message || "You have reached your credit limit");
       } else {
         console.error("Failed to generate email address:", result.error);
-        setCreditError("Failed to generate email address. Please try again.");
+        setCreditError(`Failed to generate email address: ${result.error || "Please try again."}`);
       }
     } catch (error) {
       console.error("Error generating email:", error);
@@ -227,9 +348,12 @@ export default function EmailsPage() {
     console.log("🔍 Debug - selectedEmployee:", selectedEmployee);
     console.log("🔍 Debug - selectedCompany:", selectedCompany);
 
+    // ✅ Handle multiple possible property names
+    const employeeName = selectedEmployee.fullName || "";
+
     const requestData = {
-      contactName: selectedEmployee.fullName, // ✅ Use only fullName (no fallback needed)
-      jobTitle: selectedEmployee.jobTitle, // ✅ Use only jobTitle (no fallback needed)
+      contactName: employeeName,
+      jobTitle: selectedEmployee.jobTitle || "",
       companyName: selectedCompany.name,
       location: selectedEmployee.location,
       emailType: emailType,
@@ -448,6 +572,55 @@ export default function EmailsPage() {
     refreshUserProfile();
   }, [refreshUserProfile]);
 
+  // Add this function to reload employee data if it's missing
+  const reloadEmployeeData = async () => {
+    if (!supabase || !user) return;
+
+    try {
+      // Try to get the most recent employee selection for this user
+      const { data: recentEmployee, error } = await supabase
+        .from("employee_contacts")
+        .select(
+          `
+          *,
+          company_suggestions (*)
+        `
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (recentEmployee && !error) {
+        // Reconstruct the employee and company objects
+        const employee = {
+          id: recentEmployee.id,
+          fullName: recentEmployee.name,
+          jobTitle: recentEmployee.title,
+          location: recentEmployee.location,
+          linkedinUrl: recentEmployee.linkedinUrl,
+          relevanceScore: recentEmployee.relevanceScore,
+          source: recentEmployee.source,
+        };
+
+        const company = {
+          id: recentEmployee.company_suggestions.id,
+          name: recentEmployee.company_suggestions.name,
+          // ... other company properties
+        };
+
+        // Update the store
+        const { setSelectedEmployee, setSelectedCompany } = useSearchStore.getState();
+        setSelectedEmployee(employee);
+        setSelectedCompany(company);
+
+        console.log("✅ Reloaded employee data from database");
+      }
+    } catch (error) {
+      console.error("❌ Failed to reload employee data:", error);
+    }
+  };
+
   // ✅ Show loading state while Supabase initializes
   if (!supabase) {
     return (
@@ -455,6 +628,18 @@ export default function EmailsPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Connecting to database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Show loading state while store is rehydrating
+  if (!isStoreReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );

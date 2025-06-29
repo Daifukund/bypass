@@ -1,0 +1,15 @@
+export const EXPERIENCE_LEVELS = [
+  { value: "", label: "Any experience level" },
+  { value: "Entry-level", label: "Entry-level (0-2 years)" },
+  { value: "Junior", label: "Junior (1-3 years)" },
+  { value: "Mid-level", label: "Mid-level (3-5 years)" },
+  { value: "Senior", label: "Senior (5-8 years)" },
+  { value: "Lead", label: "Lead (6-10 years)" },
+  { value: "Principal", label: "Principal (8+ years)" },
+  { value: "Manager", label: "Manager (5+ years)" },
+  { value: "Senior Manager", label: "Senior Manager (8+ years)" },
+  { value: "Director", label: "Director (10+ years)" },
+  { value: "VP", label: "VP (12+ years)" },
+  { value: "Executive", label: "Executive (15+ years)" },
+  { value: "C-Level", label: "C-Level (15+ years)" },
+];

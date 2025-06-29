@@ -29,6 +29,8 @@ export default function CompaniesPage() {
   // 🆕 Add manual company modal state
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
+  const [isAddingCompany, setIsAddingCompany] = useState(false);
+  const [addCompanyError, setAddCompanyError] = useState<string>("");
 
   // ✅ Smooth progress animation (same as criteria page)
   useEffect(() => {
@@ -142,13 +144,30 @@ export default function CompaniesPage() {
     }
   };
 
-  // 🆕 Add manual company handler
-  const handleAddManualCompany = () => {
+  // 🆕 Updated manual company handler with proper error handling
+  const handleAddManualCompany = async () => {
     if (!newCompanyName.trim()) return;
 
-    addManualCompany(newCompanyName.trim());
-    setNewCompanyName("");
-    setShowAddCompany(false);
+    setIsAddingCompany(true);
+    setAddCompanyError("");
+
+    try {
+      const result = await addManualCompany(newCompanyName.trim());
+
+      if (result.success) {
+        setNewCompanyName("");
+        setShowAddCompany(false);
+        // Could add a success toast here
+        console.log("✅ Company added successfully");
+      } else {
+        setAddCompanyError(result.error || "Failed to add company");
+      }
+    } catch (error) {
+      console.error("Error adding company:", error);
+      setAddCompanyError("Network error. Please try again.");
+    } finally {
+      setIsAddingCompany(false);
+    }
   };
 
   const getRelevanceColor = (score: string) => {
@@ -246,7 +265,7 @@ export default function CompaniesPage() {
         </div>
       </div>
 
-      {/* 🆕 Add Company Modal */}
+      {/* 🆕 Updated Add Company Modal with error handling */}
       {showAddCompany && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
@@ -259,16 +278,21 @@ export default function CompaniesPage() {
                 <input
                   type="text"
                   value={newCompanyName}
-                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  onChange={(e) => {
+                    setNewCompanyName(e.target.value);
+                    setAddCompanyError(""); // Clear error when user types
+                  }}
                   placeholder="Enter company name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
+                  disabled={isAddingCompany}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && !isAddingCompany) {
                       handleAddManualCompany();
                     }
                   }}
                 />
+                {addCompanyError && <p className="text-sm text-red-600 mt-1">{addCompanyError}</p>}
               </div>
               <p className="text-sm text-gray-500">
                 Location will be set to: {criteria?.location || "Not specified"}
@@ -278,18 +302,27 @@ export default function CompaniesPage() {
             <div className="flex gap-3 mt-6">
               <Button
                 onClick={handleAddManualCompany}
-                disabled={!newCompanyName.trim()}
+                disabled={!newCompanyName.trim() || isAddingCompany}
                 className="flex-1"
               >
-                Add Company
+                {isAddingCompany ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Adding...
+                  </>
+                ) : (
+                  "Add Company"
+                )}
               </Button>
               <Button
                 onClick={() => {
                   setShowAddCompany(false);
                   setNewCompanyName("");
+                  setAddCompanyError("");
                 }}
                 variant="outline"
                 className="flex-1"
+                disabled={isAddingCompany}
               >
                 Cancel
               </Button>

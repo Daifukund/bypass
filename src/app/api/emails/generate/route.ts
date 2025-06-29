@@ -115,6 +115,11 @@ ${params.senderName}`;
   }
 }
 
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
 export async function POST(req: NextRequest) {
   let body: any = {};
   let requestId = `req_${Date.now()}`;
@@ -176,6 +181,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Contact name, job title, company name, and email type are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUIDs before querying
+    if (!isValidUUID(companyId)) {
+      console.error(`❌ [${requestId}] Invalid company ID format:`, companyId);
+      return NextResponse.json(
+        {
+          error: "Invalid company ID format",
+          message: "Company ID must be a valid UUID. Please refresh and try again.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidUUID(employeeId)) {
+      console.error(`❌ [${requestId}] Invalid employee ID format:`, employeeId);
+      return NextResponse.json(
+        {
+          error: "Invalid employee ID format",
+          message: "Employee ID must be a valid UUID. Please refresh and try again.",
         },
         { status: 400 }
       );

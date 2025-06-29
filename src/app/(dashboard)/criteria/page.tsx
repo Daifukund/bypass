@@ -11,6 +11,18 @@ import Link from "next/link";
 import { useSearchStore } from "@/stores/search-store";
 import { SearchProgress } from "@/components/forms/search-progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LocationCombobox } from "@/components/ui/location-combobox";
+import { Select } from "@/components/ui/select";
+import { JOB_TYPES } from "@/constants/job-types";
+import { IndustryCombobox } from "@/components/ui/industry-combobox";
+import { JobPlatformsSelector } from "@/components/ui/job-platforms-selector";
+import { COMPANY_SIZES } from "@/constants/company-sizes";
+import { EXPERIENCE_LEVELS } from "@/constants/experience-levels";
+import { LANGUAGES } from "@/constants/languages";
+import { SalarySelector } from "@/components/ui/salary-selector";
+import { KeywordsSelector } from "@/components/ui/keywords-selector";
+import { ExcludeCompaniesSelector } from "@/components/ui/exclude-companies-selector";
+import { FieldWithTooltip } from "@/components/ui/field-with-tooltip";
 
 // Define the criteria interface to match the store
 interface SearchCriteria {
@@ -99,21 +111,17 @@ export default function CriteriaPage() {
     });
   };
 
-  const handleInputChange = (field: keyof SearchCriteria, value: string) => {
+  const handleInputChange = (field: keyof SearchCriteria, value: string | string[]) => {
     if (field === "keywords") {
-      // Convert comma-separated string to array
-      const keywordsArray = value
-        .split(",")
-        .map((k) => k.trim())
-        .filter((k) => k.length > 0);
+      // Keywords are handled as array
       setCriteriaState((prev) => ({
         ...prev,
-        [field]: keywordsArray,
+        [field]: value as string[],
       }));
     } else {
       setCriteriaState((prev) => ({
         ...prev,
-        [field]: value,
+        [field]: value as string,
       }));
     }
   };
@@ -289,71 +297,97 @@ export default function CriteriaPage() {
 
         <div className="p-4 pb-24">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Required Field */}
-            <div className="space-y-1.5">
-              <Label htmlFor="jobTitle" className="text-sm font-medium">
-                Job Title <span className="text-red-500">*</span>
-              </Label>
+            {/* Job Title Field - UPDATED */}
+            <FieldWithTooltip
+              label="Job Title"
+              tooltip="Be specific - use the exact job title you're targeting"
+              required
+              htmlFor="jobTitle"
+            >
               <Input
                 id="jobTitle"
-                placeholder="Business Analyst, Sales Assistant, Audit Junior, Data Analyst, etc."
+                placeholder="Business Analyst, Sales Assistant, Marketing Coordinator, Data Analyst, etc."
                 value={criteria.jobTitle}
                 onChange={(e) => handleInputChange("jobTitle", e.target.value)}
                 required
                 className="w-full"
               />
-            </div>
+            </FieldWithTooltip>
 
-            {/* Location - Full Width */}
-            <div className="space-y-1.5">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                placeholder="San Francisco, Paris, London, Remote, etc."
+            {/* Location Field - UPDATED */}
+            <FieldWithTooltip
+              label="Location"
+              tooltip="Try: City names, 'Remote', regions, or be specific like 'Remote - Europe only'"
+              htmlFor="location"
+            >
+              <LocationCombobox
                 value={criteria.location || ""}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                className="w-full"
+                onChange={(value) => handleInputChange("location", value)}
+                placeholder="San Francisco, Paris, London, Remote, etc."
               />
-            </div>
+            </FieldWithTooltip>
 
-            {/* Job Type and Industry - Half Width Each */}
+            {/* Job Type and Industry - UPDATED */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="jobType">Job Type</Label>
-                <Input
-                  id="jobType"
-                  placeholder="Internship, Full-time, Part-time, Freelance"
+              <FieldWithTooltip
+                label="Job Type"
+                tooltip="Choose the employment type that fits your availability"
+                htmlFor="jobType"
+              >
+                <Select
                   value={criteria.jobType || ""}
-                  onChange={(e) => handleInputChange("jobType", e.target.value)}
+                  onChange={(value) => handleInputChange("jobType", value)}
+                  options={JOB_TYPES}
+                  placeholder="Select job type..."
                 />
-              </div>
+              </FieldWithTooltip>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="industry">Industry</Label>
-                <Input
-                  id="industry"
-                  placeholder="Finance, Marketing, Consulting, HR, IT, Legal, Sales, etc."
+              <FieldWithTooltip
+                label="Industry"
+                tooltip="Type to search or browse popular industries"
+                htmlFor="industry"
+              >
+                <IndustryCombobox
                   value={criteria.industry || ""}
-                  onChange={(e) => handleInputChange("industry", e.target.value)}
+                  onChange={(value) => handleInputChange("industry", value)}
+                  placeholder="Finance, Marketing, Consulting, HR, IT, Legal, Sales, etc."
                 />
-              </div>
+              </FieldWithTooltip>
             </div>
 
-            {/* Advanced Filters Toggle */}
-            <div className="border-t border-gray-200 pt-3">
+            {/* Advanced Filters Toggle - More Visible */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
               <button
                 type="button"
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="flex items-center justify-between w-full text-left"
+                className="flex items-center justify-between w-full text-left group hover:bg-white hover:border-blue-200 hover:shadow-sm transition-all duration-200 p-3 rounded-lg border border-transparent"
               >
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {showAdvancedFilters ? "Hide Advanced Filters" : "Show Advanced Filters"}
-                </h3>
-                {showAdvancedFilters ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
-                )}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`p-2 rounded-full transition-colors ${showAdvancedFilters ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600 group-hover:bg-blue-50 group-hover:text-blue-600"}`}
+                  >
+                    <ChevronDown
+                      className={`h-5 w-5 transition-transform ${showAdvancedFilters ? "rotate-180" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-900">
+                      {showAdvancedFilters ? "Hide Advanced Filters" : "Show Advanced Filters"}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      {showAdvancedFilters
+                        ? "Collapse additional search options"
+                        : "Fine-tune your search with platforms, company size, experience level & more"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!showAdvancedFilters && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                      6 more filters
+                    </span>
+                  )}
+                </div>
               </button>
             </div>
 
@@ -361,76 +395,89 @@ export default function CriteriaPage() {
             {showAdvancedFilters && (
               <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="jobPlatforms">Job Platforms</Label>
-                    <Input
-                      id="jobPlatforms"
-                      placeholder="LinkedIn, Indeed, Glassdoor, JobTeaser, etc."
+                  <FieldWithTooltip
+                    label="Job Platforms"
+                    tooltip="Select multiple platforms to maximize your search coverage"
+                    htmlFor="jobPlatforms"
+                  >
+                    <JobPlatformsSelector
                       value={criteria.jobPlatforms || ""}
-                      onChange={(e) => handleInputChange("jobPlatforms", e.target.value)}
+                      onChange={(value) => handleInputChange("jobPlatforms", value)}
                     />
-                  </div>
+                  </FieldWithTooltip>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="companySize">Company Size</Label>
-                    <Input
-                      id="companySize"
-                      placeholder="Startup (1–50), Scale-up (51–200), Corporate (1000+)"
+                  <FieldWithTooltip
+                    label="Company Size"
+                    tooltip="Choose based on your preferred work environment"
+                    htmlFor="companySize"
+                  >
+                    <Select
                       value={criteria.companySize || ""}
-                      onChange={(e) => handleInputChange("companySize", e.target.value)}
+                      onChange={(value) => handleInputChange("companySize", value)}
+                      options={COMPANY_SIZES}
+                      placeholder="Select company size..."
                     />
-                  </div>
+                  </FieldWithTooltip>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="experienceLevel">Experience Level</Label>
-                    <Input
-                      id="experienceLevel"
-                      placeholder="Entry-level, Mid-level, Senior, Executive"
+                  <FieldWithTooltip
+                    label="Experience Level"
+                    tooltip="Match your current career stage"
+                    htmlFor="experienceLevel"
+                  >
+                    <Select
                       value={criteria.experienceLevel || ""}
-                      onChange={(e) => handleInputChange("experienceLevel", e.target.value)}
+                      onChange={(value) => handleInputChange("experienceLevel", value)}
+                      options={EXPERIENCE_LEVELS}
+                      placeholder="Select experience level..."
                     />
-                  </div>
+                  </FieldWithTooltip>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="language">Preferred Language</Label>
-                    <Input
-                      id="language"
-                      placeholder="English, French, German, Spanish, etc."
+                  <FieldWithTooltip
+                    label="Preferred Language"
+                    tooltip="Choose your preferred working language"
+                    htmlFor="language"
+                  >
+                    <Select
                       value={criteria.language || ""}
-                      onChange={(e) => handleInputChange("language", e.target.value)}
+                      onChange={(value) => handleInputChange("language", value)}
+                      options={LANGUAGES}
+                      placeholder="Select preferred language..."
                     />
-                  </div>
+                  </FieldWithTooltip>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="expectedSalary">Expected Salary</Label>
-                    <Input
-                      id="expectedSalary"
-                      placeholder="e.g., €1500/month, $60K/year, Competitive"
+                  <FieldWithTooltip
+                    label="Expected Salary"
+                    tooltip="Optional - helps find roles matching your expectations"
+                    htmlFor="expectedSalary"
+                  >
+                    <SalarySelector
                       value={criteria.expectedSalary || ""}
-                      onChange={(e) => handleInputChange("expectedSalary", e.target.value)}
+                      onChange={(value) => handleInputChange("expectedSalary", value)}
                     />
-                  </div>
+                  </FieldWithTooltip>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="keywords">Keywords</Label>
-                  <Input
-                    id="keywords"
-                    placeholder="Remote-first, No cold calling, Python, Sustainability, etc."
-                    value={criteria.keywords?.join(", ") || ""}
-                    onChange={(e) => handleInputChange("keywords", e.target.value)}
+                <FieldWithTooltip
+                  label="Keywords"
+                  tooltip="Add relevant keywords to refine your search"
+                  htmlFor="keywords"
+                >
+                  <KeywordsSelector
+                    value={criteria.keywords || []}
+                    onChange={(value) => handleInputChange("keywords", value)}
                   />
-                </div>
+                </FieldWithTooltip>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="excludeCompanies">Exclude Companies</Label>
-                  <Input
-                    id="excludeCompanies"
-                    placeholder="Specific company names or types to avoid (e.g. Amazon, KPMG, Big 4, Call centers)"
+                <FieldWithTooltip
+                  label="Exclude Companies"
+                  tooltip="Specify companies or types to avoid in your search"
+                  htmlFor="excludeCompanies"
+                >
+                  <ExcludeCompaniesSelector
                     value={criteria.excludeCompanies || ""}
-                    onChange={(e) => handleInputChange("excludeCompanies", e.target.value)}
+                    onChange={(value) => handleInputChange("excludeCompanies", value)}
                   />
-                </div>
+                </FieldWithTooltip>
               </div>
             )}
           </form>
@@ -474,7 +521,11 @@ export default function CriteriaPage() {
         </div>
       </div>
 
-      <SearchProgress isVisible={showProgress} apiProgress={targetProgress} />
+      <SearchProgress
+        isVisible={showProgress}
+        apiProgress={targetProgress}
+        searchMode={searchMode}
+      />
     </div>
   );
 }

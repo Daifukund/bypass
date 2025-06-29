@@ -61,7 +61,7 @@ RELEVANCE SCORING CRITERIA:
 
 DISTRIBUTION REQUIREMENT: Return approximately 3-5 "Perfect Match", 2-3 "Good Match", and 2-3 "Potential Match" companies to provide variety. (Show varierty!)
 
-VERY IMPORTANT: Find real companies that match the following criteria. Do not invent or make up company names — only return existing businesses!! 
+VERY IMPORTANT: Find real companies that match the following criteria. Do not invent or make up company names — only return existing businesses!! (DO NOT INVENT COMPANIES!!)
 
 IMPORTANT: Return ONLY a valid JSON array. No explanations, no markdown, no additional text.
 
@@ -77,7 +77,9 @@ For each company, return a JSON object with the following fields:
 }
 
 Sort companies by relevanceScore first (Perfect Match → Good Match → Potential Match), then by how well they match the specific job title and criteria.
-Return ONLY the JSON array, nothing else.`,
+Return ONLY the JSON array, nothing else.
+
+REMEMBER THAT I ONLY WANT EXISTING COMPANIES, NOT INVENTED COMPANIES.`,
 
   /**
    * Employee Discovery Prompt

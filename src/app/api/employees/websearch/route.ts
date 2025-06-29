@@ -129,10 +129,25 @@ export async function POST(req: NextRequest) {
       console.log("✅ Citations count:", citations.length);
       console.log("✅ Used web search:", usedWebSearch);
 
-      // Validate employees data
+      // Validate employees data - DON'T throw error for empty results
       if (!Array.isArray(employees) || employees.length === 0) {
-        console.warn("⚠️ No valid employees returned from OpenAI");
-        throw new Error("No employees found at this company");
+        console.warn("⚠️ No employees found at this company");
+
+        // Return success response with empty results and LinkedIn URL for manual search
+        return NextResponse.json({
+          success: true,
+          employees: [],
+          citations: citations || [],
+          usedWebSearch: usedWebSearch || false,
+          total: 0,
+          message: "No employees found at this company. Try using the LinkedIn paste tool instead.",
+          linkedinPeopleSearchUrl: linkedinPeopleSearchUrl || null,
+          // Add suggestion for manual search
+          suggestion: {
+            action: "manual_search",
+            message: "Try searching LinkedIn manually and paste the results",
+          },
+        });
       }
 
       // Validate each employee has required fields

@@ -53,6 +53,8 @@ export default function EmployeesPage() {
   const [linkedinContent, setLinkedinContent] = useState("");
   const [showLinkedinPaste, setShowLinkedinPaste] = useState(false);
   const [isGeneratingLinkedInUrl, setIsGeneratingLinkedInUrl] = useState(false);
+  const [extractionMessage, setExtractionMessage] = useState<string>("");
+  const [extractionError, setExtractionError] = useState<string>("");
 
   // ✅ Better handling of direct navigation
   useEffect(() => {
@@ -133,11 +135,18 @@ export default function EmployeesPage() {
   };
 
   const handleLinkedInPaste = async () => {
-    if (!linkedinContent.trim()) return;
+    if (!linkedinContent.trim()) {
+      setExtractionError("Please paste LinkedIn content first");
+      return;
+    }
 
     setIsLoading(true);
+    setExtractionMessage("");
+    setExtractionError("");
 
     try {
+      console.log("🔍 Extracting employees from LinkedIn paste...");
+
       // Call API to extract employees from LinkedIn paste
       const response = await fetch("/api/employees/extract-from-paste", {
         method: "POST",
@@ -151,21 +160,48 @@ export default function EmployeesPage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to extract employees");
-      }
-
       const result = await response.json();
 
-      // Add extracted employees to existing list
-      const { setEmployees } = useSearchStore.getState();
-      const currentEmployees = useSearchStore.getState().employees;
-      setEmployees([...currentEmployees, ...result.employees]);
+      console.log("📥 API Response:", result);
 
-      setLinkedinContent("");
-      setShowLinkedinPaste(false);
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to extract employees");
+      }
+
+      if (result.success && result.employees && result.employees.length > 0) {
+        // Transform API response to match frontend format
+        const transformedEmployees = result.employees.map((emp: any) => ({
+          id: emp.id,
+          fullName: emp.name, // Map 'name' to 'fullName'
+          jobTitle: emp.title, // Map 'title' to 'jobTitle'
+          location: emp.location,
+          linkedinUrl: emp.linkedinUrl,
+          relevanceScore: emp.relevanceScore,
+          source: emp.source,
+        }));
+
+        // Add extracted employees to existing list
+        const { setEmployees } = useSearchStore.getState();
+        const currentEmployees = useSearchStore.getState().employees;
+        setEmployees([...currentEmployees, ...transformedEmployees]);
+
+        // Show success message
+        console.log(`✅ Successfully extracted ${result.employees.length} employees!`);
+
+        setExtractionMessage(`✅ Successfully extracted ${result.employees.length} employees!`);
+        setLinkedinContent("");
+
+        // Auto-hide message after 3 seconds
+        setTimeout(() => setExtractionMessage(""), 3000);
+      } else {
+        setExtractionError(
+          "No employees found in the pasted content. Please make sure you copied the LinkedIn people search results correctly."
+        );
+      }
     } catch (error) {
-      console.error("Error extracting employees:", error);
+      setExtractionError(
+        `Error: ${error instanceof Error ? error.message : "Something went wrong"}`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +274,7 @@ export default function EmployeesPage() {
     window.open(
       linkedinPeopleSearchUrl,
       "linkedin-search",
-      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
   };
 
@@ -268,13 +304,11 @@ export default function EmployeesPage() {
         </Link>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Choose who you want to contact
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Choose who you want to contact</h1>
           <p className="text-gray-600">
             We found the most relevant people at{" "}
-            <span className="font-semibold">{selectedCompany.name}</span>. Click
-            one to generate a personalized email.
+            <span className="font-semibold">{selectedCompany.name}</span>. Click one to generate a
+            personalized email.
           </p>
         </div>
       </div>
@@ -291,12 +325,8 @@ export default function EmployeesPage() {
                   : `Only ${creditsRemaining} email address credit${creditsRemaining === 1 ? "" : "s"} remaining`}
               </p>
               <p className="text-yellow-700 text-sm">
-                Each contact selection uses 1 credit to generate their email
-                address.
-                <Link
-                  href="/upgrade"
-                  className="ml-1 underline hover:no-underline"
-                >
+                Each contact selection uses 1 credit to generate their email address.
+                <Link href="/upgrade" className="ml-1 underline hover:no-underline">
                   Upgrade to Premium for unlimited access.
                 </Link>
               </p>
@@ -341,9 +371,7 @@ export default function EmployeesPage() {
                     <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
                       {employee.fullName}
                     </h3>
-                    <p className="text-sm text-gray-600 line-clamp-1">
-                      {employee.jobTitle}
-                    </p>
+                    <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
                   </div>
 
                   {/* Location */}
@@ -395,24 +423,19 @@ export default function EmployeesPage() {
       ) : (
         <div className="text-center py-12">
           <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No contacts found
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No contacts found</h3>
           <p className="text-gray-600 mb-6">
-            We couldn't find any employees automatically. Try using the LinkedIn
-            paste tool below.
+            We couldn't find any employees automatically. Try using the LinkedIn paste tool below.
           </p>
         </div>
       )}
 
       {/* LinkedIn Paste Section */}
       <div className="bg-gray-50 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">
-          Paste Your Own LinkedIn Search
-        </h2>
+        <h2 className="text-xl font-semibold mb-4">Paste Your Own LinkedIn Search</h2>
         <p className="text-gray-600 mb-6">
-          Not finding the right person? Generate an AI-powered LinkedIn search
-          link or paste a LinkedIn "People" page here.
+          Not finding the right person? Generate an AI-powered LinkedIn search link or paste a
+          LinkedIn "People" page here.
         </p>
 
         {/* Generate LinkedIn URL Button */}
@@ -440,19 +463,14 @@ export default function EmployeesPage() {
                 ✅ LinkedIn search link generated successfully!
               </p>
               <div className="flex items-center space-x-2">
-                <Button
-                  onClick={handleOpenLinkedInPopup}
-                  className="flex items-center space-x-2"
-                >
+                <Button onClick={handleOpenLinkedInPopup} className="flex items-center space-x-2">
                   <Linkedin className="h-4 w-4" />
                   <span>View on LinkedIn</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    navigator.clipboard.writeText(linkedinPeopleSearchUrl)
-                  }
+                  onClick={() => navigator.clipboard.writeText(linkedinPeopleSearchUrl)}
                   title="Copy URL"
                 >
                   <Copy className="h-4 w-4" />
@@ -465,24 +483,15 @@ export default function EmployeesPage() {
         {/* Instructions - only show if LinkedIn URL is generated */}
         {linkedinPeopleSearchUrl && (
           <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">
-              1. Open the LinkedIn search link above
-            </p>
+            <p className="text-sm text-gray-600 mb-2">1. Open the LinkedIn search link above</p>
             <p className="text-sm text-gray-600 mb-2">
               2. On the LinkedIn page, press{" "}
-              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">
-                Ctrl + A or ⌘ + A
-              </kbd>{" "}
-              then{" "}
-              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">
-                Ctrl + C or ⌘ + C
-              </kbd>
+              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">Ctrl + A or ⌘ + A</kbd> then{" "}
+              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">Ctrl + C or ⌘ + C</kbd>
             </p>
             <p className="text-sm text-gray-600">
               3. Paste the content here:{" "}
-              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">
-                Ctrl + V or ⌘ + V
-              </kbd>
+              <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">Ctrl + V or ⌘ + V</kbd>
             </p>
           </div>
         )}
@@ -497,10 +506,7 @@ export default function EmployeesPage() {
           />
 
           <div className="flex space-x-2">
-            <Button
-              onClick={handleLinkedInPaste}
-              disabled={!linkedinContent.trim() || isLoading}
-            >
+            <Button onClick={handleLinkedInPaste} disabled={!linkedinContent.trim() || isLoading}>
               {isLoading ? "Extracting..." : "Extract Employees"}
             </Button>
 
@@ -515,6 +521,18 @@ export default function EmployeesPage() {
             </Button>
           </div>
         </div>
+
+        {extractionMessage && (
+          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            {extractionMessage}
+          </div>
+        )}
+
+        {extractionError && (
+          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            {extractionError}
+          </div>
+        )}
       </div>
     </div>
   );

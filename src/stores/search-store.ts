@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Company, Employee } from "@/lib/openai/types";
+import crypto from "crypto";
 
 type Criteria = {
   jobTitle: string;
@@ -38,7 +39,7 @@ type SearchStore = {
   reset: () => void;
   setLinkedinPeopleSearchUrl: (url: string | null) => void;
   setSearchMode: (mode: "standard" | "websearch") => void;
-  addManualCompany: (companyName: string) => void;
+  addManualCompany: (companyName: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 export const useSearchStore = create<SearchStore>()(
@@ -65,9 +66,7 @@ export const useSearchStore = create<SearchStore>()(
 
         set({
           criteria: c,
-          searchSessionId: isNewSearch
-            ? Date.now().toString()
-            : get().searchSessionId,
+          searchSessionId: isNewSearch ? Date.now().toString() : get().searchSessionId,
           // Clear downstream data when starting new search
           ...(isNewSearch && {
             companies: [],
@@ -92,24 +91,51 @@ export const useSearchStore = create<SearchStore>()(
 
       setSearchMode: (mode) => set({ searchMode: mode }),
 
-      addManualCompany: (companyName: string) => {
-        const currentCompanies = get().companies;
-        const criteria = get().criteria;
+      addManualCompany: async (companyName: string) => {
+        try {
+          const criteria = get().criteria;
 
-        const newCompany: Company = {
-          id: `manual-${Date.now()}`,
-          name: companyName,
-          logo: "",
-          description: "Manually added company",
-          estimatedEmployees: "Unknown",
-          relevanceScore: "Good Match",
-          location: criteria?.location || "",
-          url: "",
-          source: "Manual Entry",
-        };
+          const response = await fetch("/api/companies/manual-add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              companyName: companyName.trim(),
+              location: criteria?.location || null,
+            }),
+          });
 
-        // Add to the beginning of the companies array
-        set({ companies: [newCompany, ...currentCompanies] });
+          const result = await response.json();
+
+          if (!response.ok) {
+            console.error("Failed to add manual company:", result.error);
+            return { success: false, error: result.error || "Failed to add company" };
+          }
+
+          // Only update frontend state after successful database save
+          const currentCompanies = get().companies;
+          const newCompany: Company = {
+            id: result.company.id,
+            name: result.company.name,
+            logo: result.company.logoUrl || "",
+            description: result.company.description,
+            estimatedEmployees: result.company.estimatedEmployees,
+            relevanceScore: result.company.relevanceScore as any,
+            location: result.company.location,
+            url: result.company.url || "",
+            linkedinUrl: result.company.linkedinUrl || "",
+            websiteUrl: result.company.url || "",
+            source: result.company.source,
+          };
+
+          // Add to the beginning of the companies array
+          set({ companies: [newCompany, ...currentCompanies] });
+
+          console.log("✅ Manual company added successfully:", newCompany);
+          return { success: true };
+        } catch (error) {
+          console.error("Error adding manual company:", error);
+          return { success: false, error: "Network error. Please try again." };
+        }
       },
 
       startNewSearch: () =>
@@ -138,8 +164,7 @@ export const useSearchStore = create<SearchStore>()(
           searchMode: "standard",
         }),
 
-      setLinkedinPeopleSearchUrl: (url) =>
-        set({ linkedinPeopleSearchUrl: url }),
+      setLinkedinPeopleSearchUrl: (url) => set({ linkedinPeopleSearchUrl: url }),
     }),
     {
       name: "bypass-search-storage",
@@ -161,6 +186,6 @@ export const useSearchStore = create<SearchStore>()(
           localStorage.removeItem("bypass-search-storage");
         }
       },
-    },
-  ),
+    }
+  )
 );
