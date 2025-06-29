@@ -247,7 +247,10 @@ export default function EmailsPage() {
 
     // ✅ Handle multiple possible property names for employee name
     const employeeName =
-      selectedEmployee.fullName || selectedEmployee.name || selectedEmployee.full_name || "";
+      selectedEmployee.fullName ||
+      (selectedEmployee as any).name ||
+      (selectedEmployee as any).full_name ||
+      "";
 
     const companyName = selectedCompany.name || "";
 
@@ -259,8 +262,8 @@ export default function EmailsPage() {
       console.error("❌ Invalid employee name:", {
         selectedEmployee,
         fullName: selectedEmployee.fullName,
-        name: selectedEmployee.name,
-        full_name: selectedEmployee.full_name,
+        name: (selectedEmployee as any).name,
+        full_name: (selectedEmployee as any).full_name,
       });
       setCreditError(
         "Employee name is missing or invalid. Please go back and select a valid employee."
@@ -288,8 +291,8 @@ export default function EmailsPage() {
         employeeId: selectedEmployee.id,
         jobTitle: (
           selectedEmployee.jobTitle ||
-          selectedEmployee.title ||
-          selectedEmployee.job_title ||
+          (selectedEmployee as any).title ||
+          (selectedEmployee as any).job_title ||
           ""
         ).trim(),
         location: (selectedEmployee.location || "").trim(),
@@ -349,11 +352,19 @@ export default function EmailsPage() {
     console.log("🔍 Debug - selectedCompany:", selectedCompany);
 
     // ✅ Handle multiple possible property names
-    const employeeName = selectedEmployee.fullName || "";
+    const employeeName =
+      selectedEmployee.fullName ||
+      (selectedEmployee as any).name ||
+      (selectedEmployee as any).full_name ||
+      "";
 
     const requestData = {
       contactName: employeeName,
-      jobTitle: selectedEmployee.jobTitle || "",
+      jobTitle:
+        selectedEmployee.jobTitle ||
+        (selectedEmployee as any).title ||
+        (selectedEmployee as any).job_title ||
+        "",
       companyName: selectedCompany.name,
       location: selectedEmployee.location,
       emailType: emailType,
@@ -606,7 +617,15 @@ export default function EmailsPage() {
         const company = {
           id: recentEmployee.company_suggestions.id,
           name: recentEmployee.company_suggestions.name,
-          // ... other company properties
+          description: recentEmployee.company_suggestions.description || "",
+          estimatedEmployees: recentEmployee.company_suggestions.estimatedEmployees || "Unknown",
+          relevanceScore:
+            (recentEmployee.company_suggestions.relevanceScore as any) || "Good Match",
+          location: recentEmployee.company_suggestions.location || "",
+          source: recentEmployee.company_suggestions.source || "Database",
+          linkedinUrl: recentEmployee.company_suggestions.linkedinUrl,
+          websiteUrl: recentEmployee.company_suggestions.websiteUrl,
+          logo: recentEmployee.company_suggestions.logoUrl,
         };
 
         // Update the store
