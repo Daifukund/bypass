@@ -55,6 +55,7 @@ export default function EmployeesPage() {
   const [isGeneratingLinkedInUrl, setIsGeneratingLinkedInUrl] = useState(false);
   const [extractionMessage, setExtractionMessage] = useState<string>("");
   const [extractionError, setExtractionError] = useState<string>("");
+  const [showLinkedInReminder, setShowLinkedInReminder] = useState(false);
 
   // ✅ Better handling of direct navigation
   useEffect(() => {
@@ -248,9 +249,12 @@ export default function EmployeesPage() {
         } else {
           console.log("⚠️ Using fallback LinkedIn URL (AI not available)");
         }
+      } else if (data.success === false) {
+        console.error("❌ API returned error:", data.error || data.message);
+        // Show user-friendly error message
+        // Maybe try to generate a basic fallback URL on frontend
       } else {
         console.error("❌ No LinkedIn URL in response:", data);
-        // You could add a toast notification here
       }
     } catch (error) {
       console.error("❌ Error generating LinkedIn URL:", error);
@@ -260,22 +264,66 @@ export default function EmployeesPage() {
     }
   };
 
-  // Add this function to handle opening LinkedIn in a popup
+  const showBrowserNotification = () => {
+    // Request permission first
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          createNotification();
+        }
+      });
+    } else if (Notification.permission === "granted") {
+      createNotification();
+    }
+  };
+
+  const createNotification = () => {
+    const notification = new Notification("LinkedIn opened!", {
+      body: "Press Ctrl+A then Ctrl+C on the LinkedIn page, then come back and paste here.",
+      icon: "/logo.png",
+      requireInteraction: true, // Stays visible until user clicks
+      tag: "linkedin-reminder", // Prevents duplicate notifications
+    });
+
+    // Auto-close after 10 seconds
+    setTimeout(() => notification.close(), 10000);
+  };
+
   const handleOpenLinkedInPopup = () => {
     if (!linkedinPeopleSearchUrl) return;
 
-    // Calculate popup dimensions (smaller window)
-    const width = 1000;
-    const height = 700;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    // Better responsive sizing
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
 
-    // Open LinkedIn in a popup window
+    // Use 85% of screen size with reasonable limits
+    const width = Math.min(Math.max(screenWidth * 0.85, 1000), 1400);
+    const height = Math.min(Math.max(screenHeight * 0.85, 700), 900);
+
+    const left = (screenWidth - width) / 2;
+    const top = (screenHeight - height) / 2;
+
+    // Open LinkedIn popup
     window.open(
       linkedinPeopleSearchUrl,
       "linkedin-search",
-      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,toolbar=no,menubar=no`
     );
+
+    // Show reminder message for longer duration
+    setShowLinkedInReminder(true);
+
+    // Auto-hide after 30 seconds (instead of 10)
+    setTimeout(() => setShowLinkedInReminder(false), 30000);
+  };
+
+  const handleLinkedinContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLinkedinContent(e.target.value);
+
+    // Auto-hide reminder when user starts pasting
+    if (e.target.value.length > 10 && showLinkedInReminder) {
+      setShowLinkedInReminder(false);
+    }
   };
 
   if (!selectedCompany) {
@@ -425,13 +473,24 @@ export default function EmployeesPage() {
           <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No contacts found</h3>
           <p className="text-gray-600 mb-6">
-            We couldn't find any employees automatically. Try using the LinkedIn paste tool below.
+            We couldn't find any employees automatically. Let's try a different approach.
           </p>
+
+          {/* Single CTA */}
+          <Button
+            onClick={() =>
+              document.getElementById("linkedin-paste")?.scrollIntoView({ behavior: "smooth" })
+            }
+            size="lg"
+            className="w-full max-w-sm mx-auto"
+          >
+            🔗 Find Employees on LinkedIn
+          </Button>
         </div>
       )}
 
       {/* LinkedIn Paste Section */}
-      <div className="bg-gray-50 rounded-lg p-6">
+      <div id="linkedin-paste" className="bg-gray-50 rounded-lg p-6">
         <h2 className="text-xl font-semibold mb-4">Paste Your Own LinkedIn Search</h2>
         <p className="text-gray-600 mb-6">
           Not finding the right person? Generate an AI-powered LinkedIn search link or paste a
@@ -465,7 +524,9 @@ export default function EmployeesPage() {
               <div className="flex items-center space-x-2">
                 <Button onClick={handleOpenLinkedInPopup} className="flex items-center space-x-2">
                   <Linkedin className="h-4 w-4" />
-                  <span>View on LinkedIn</span>
+                  <span>
+                    {showLinkedInReminder ? "LinkedIn opened - Copy content" : "View on LinkedIn"}
+                  </span>
                 </Button>
                 <Button
                   variant="outline"
@@ -496,44 +557,60 @@ export default function EmployeesPage() {
           </div>
         )}
 
-        {/* Paste Input - always show */}
-        <div className="space-y-4">
-          <textarea
-            value={linkedinContent}
-            onChange={(e) => setLinkedinContent(e.target.value)}
-            placeholder="Paste LinkedIn page content here..."
-            className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-
-          <div className="flex space-x-2">
-            <Button onClick={handleLinkedInPaste} disabled={!linkedinContent.trim() || isLoading}>
-              {isLoading ? "Extracting..." : "Extract Employees"}
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => {
-                setLinkedinContent("");
-                setShowLinkedinPaste(false);
-              }}
-            >
-              Clear
-            </Button>
+        {/* Inline message - stays visible longer */}
+        {showLinkedInReminder && (
+          <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className="text-green-600">✓</span>
+              <span>Copy the page content (Ctrl/⌘+A → Ctrl/⌘+C)</span>
+            </div>
           </div>
+        )}
+
+        {/* Paste Input - highlighted longer */}
+        <textarea
+          value={linkedinContent}
+          onChange={handleLinkedinContentChange}
+          placeholder={
+            showLinkedInReminder
+              ? "Paste content here (Ctrl/⌘+V)"
+              : "Paste LinkedIn page content here..."
+          }
+          className={`w-full h-32 p-3 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 ${
+            showLinkedInReminder
+              ? "border-2 border-green-400 bg-green-50"
+              : "border border-gray-300"
+          }`}
+        />
+
+        <div className="flex space-x-2">
+          <Button onClick={handleLinkedInPaste} disabled={!linkedinContent.trim() || isLoading}>
+            {isLoading ? "Extracting..." : "Extract Employees"}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              setLinkedinContent("");
+              setShowLinkedinPaste(false);
+            }}
+          >
+            Clear
+          </Button>
         </div>
-
-        {extractionMessage && (
-          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-            {extractionMessage}
-          </div>
-        )}
-
-        {extractionError && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
-            {extractionError}
-          </div>
-        )}
       </div>
+
+      {extractionMessage && (
+        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+          {extractionMessage}
+        </div>
+      )}
+
+      {extractionError && (
+        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+          {extractionError}
+        </div>
+      )}
     </div>
   );
 }

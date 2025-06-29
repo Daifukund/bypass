@@ -869,6 +869,13 @@ export default function EmailsPage() {
           <p className="text-xs text-gray-500 mt-2">
             Email content generation is unlimited and free for all users
           </p>
+          <p className="text-xs text-blue-600 mt-1">
+            💡{" "}
+            <Link href="/profile" className="underline hover:text-blue-800">
+              Complete your profile
+            </Link>{" "}
+            for more personalized emails
+          </p>
         </div>
 
         {/* Text Area editable */}
