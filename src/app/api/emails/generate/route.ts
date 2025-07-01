@@ -103,9 +103,7 @@ Saludos cordiales,
 ${params.senderName}`;
 
       default: // English
-        return `Hello ${params.contactName},
-
-My name is ${params.senderName}, a ${params.studyLevel} in ${params.fieldOfStudy} at ${params.university}. I am very interested in your career path at ${params.companyName}.
+        return `My name is [Student], [Student] in [Field of Study] at [University]. I am very interested in your career path at ${params.companyName}.
 
 Would you be available for a 15-minute exchange?
 
@@ -306,7 +304,7 @@ export async function POST(req: NextRequest) {
     const displayEmailType =
       {
         networking: "Networking",
-        coffee_chat: "Coffee Chat",
+        coffee_chat: "Quick Call Request",
         cold_application: "Cold Application",
         referral_request: "Referral Request",
         follow_up: "Follow-up",

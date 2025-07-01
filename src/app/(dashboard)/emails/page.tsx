@@ -588,6 +588,8 @@ export default function EmailsPage() {
     if (!supabase || !user) return;
 
     try {
+      setIsLoading(true);
+
       // Try to get the most recent employee selection for this user
       const { data: recentEmployee, error } = await supabase
         .from("employee_contacts")
@@ -619,8 +621,7 @@ export default function EmailsPage() {
           name: recentEmployee.company_suggestions.name,
           description: recentEmployee.company_suggestions.description || "",
           estimatedEmployees: recentEmployee.company_suggestions.estimatedEmployees || "Unknown",
-          relevanceScore:
-            (recentEmployee.company_suggestions.relevanceScore as any) || "Good Match",
+          relevanceScore: recentEmployee.company_suggestions.relevanceScore || "Good Match",
           location: recentEmployee.company_suggestions.location || "",
           source: recentEmployee.company_suggestions.source || "Database",
           linkedinUrl: recentEmployee.company_suggestions.linkedinUrl,
@@ -633,12 +634,42 @@ export default function EmailsPage() {
         setSelectedEmployee(employee);
         setSelectedCompany(company);
 
-        console.log("✅ Reloaded employee data from database");
+        console.log("✅ Recovered employee data from database");
+        return true;
       }
     } catch (error) {
       console.error("❌ Failed to reload employee data:", error);
+    } finally {
+      setIsLoading(false);
     }
+    return false;
   };
+
+  // ✅ Add recovery logic when store data is missing
+  useEffect(() => {
+    if (isStoreReady && (!selectedEmployee || !selectedCompany)) {
+      console.log("🔄 Store data missing, attempting recovery...");
+      reloadEmployeeData();
+    }
+  }, [isStoreReady, selectedEmployee, selectedCompany]);
+
+  // ✅ Clear previous email content when employee changes
+  useEffect(() => {
+    if (selectedEmployee && isStoreReady) {
+      // Clear previous generated email content when employee changes
+      if (generatedEmail) {
+        console.log("🧹 Clearing previous email content for new employee");
+        setGeneratedEmail("");
+      }
+
+      // Reset local email state
+      setEmailSubject("");
+      setEmailBody("");
+      setGuessedEmail("");
+      setConfidence(0);
+      setCreditError("");
+    }
+  }, [selectedEmployee?.id, isStoreReady]); // Only trigger when employee ID changes
 
   // ✅ Show loading state while Supabase initializes
   if (!supabase) {

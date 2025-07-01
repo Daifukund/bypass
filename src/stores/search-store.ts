@@ -86,7 +86,16 @@ export const useSearchStore = create<SearchStore>()(
           employees,
           linkedinPeopleSearchUrl: linkedinUrl || null,
         }),
-      setSelectedEmployee: (e) => set({ selectedEmployee: e }),
+      setSelectedEmployee: (e) => {
+        const currentEmployee = get().selectedEmployee;
+        const isNewEmployee = !currentEmployee || currentEmployee.id !== e.id;
+
+        set({
+          selectedEmployee: e,
+          // Clear email content only if it's actually a different employee
+          ...(isNewEmployee && { generatedEmail: "" }),
+        });
+      },
       setGeneratedEmail: (email) => set({ generatedEmail: email }),
 
       setSearchMode: (mode) => set({ searchMode: mode }),

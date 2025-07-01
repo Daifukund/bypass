@@ -201,10 +201,40 @@ export default function CriteriaPage() {
         setCompanies(result.companies);
         showToast(`Found ${result.companies.length} companies matching your criteria`, "success");
       } else {
-        showToast(
-          "No companies found matching your criteria. Try adjusting your search preferences.",
-          "error"
-        );
+        // ✅ Enhanced error handling with recovery options
+        clearInterval(microProgressInterval);
+        setTargetProgress(0);
+        setShowProgress(false);
+
+        const errorMessage = result.message || "Unable to find companies matching your criteria";
+        const isServiceError = result.error?.includes("temporarily unavailable");
+
+        if (isServiceError) {
+          const shouldRetry = window.confirm(
+            `${errorMessage}\n\nWould you like to try again? This sometimes happens when our AI service is busy.`
+          );
+          if (shouldRetry) {
+            // Retry the same search
+            setTimeout(() => handleSubmit(e), 1000);
+            return;
+          }
+        } else {
+          const shouldAdjust = window.confirm(
+            `${errorMessage}\n\nWould you like to adjust your search criteria? Try making your job title more general or removing some filters.`
+          );
+          if (shouldAdjust) {
+            // Focus on job title field for easy editing
+            const jobTitleInput = document.querySelector(
+              'input[name="jobTitle"]'
+            ) as HTMLInputElement;
+            if (jobTitleInput) {
+              jobTitleInput.focus();
+            }
+            return;
+          }
+        }
+
+        showToast(errorMessage, "error");
       }
     } catch (error) {
       clearInterval(microProgressInterval);

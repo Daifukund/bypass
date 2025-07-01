@@ -13,6 +13,7 @@ import {
   Linkedin,
   AlertCircle,
   Loader2,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -27,6 +28,40 @@ interface UserProfile {
   email_credits?: number;
   plan?: string;
 }
+
+const scrollToEmailGeneration = () => {
+  const emailSection = document.getElementById("linkedin-paste");
+  if (emailSection) {
+    emailSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
+
+const EmptyEmployeesState = ({ onScrollToEmail }: { onScrollToEmail: () => void }) => (
+  <div className="text-center space-y-6 py-12">
+    <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+      <Users className="h-8 w-8 text-gray-400" />
+    </div>
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Employees Found</h3>
+      <p className="text-gray-600 max-w-md mx-auto mb-6">
+        We couldn't find employees automatically at this company. This might be because it's a newer
+        company or our AI search needs help.
+      </p>
+      <div className="space-y-3">
+        <Button onClick={onScrollToEmail} className="bg-blue-600 hover:bg-blue-700">
+          <Linkedin className="h-4 w-4 mr-2" />
+          Try LinkedIn Search Instead
+        </Button>
+        <div className="text-sm text-gray-500">
+          <p>We'll help you generate a LinkedIn search and extract results</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default function EmployeesPage() {
   const {
@@ -97,11 +132,35 @@ export default function EmployeesPage() {
   const handleSelectEmployee = async (employee: any) => {
     if (isLoading) return;
 
-    // Check if user has credits before allowing selection
+    // ✅ Enhanced credit warning system
     if (!isPremium && emailCreditsUsed >= maxFreeCredits) {
-      // Could show a modal or redirect to upgrade
-      router.push("/upgrade");
+      const shouldUpgrade = window.confirm(
+        `You've used all ${maxFreeCredits} free emails. Upgrade to Premium for unlimited email generation?`
+      );
+      if (shouldUpgrade) {
+        router.push("/upgrade");
+      }
       return;
+    }
+
+    // ✅ Warning for last credit
+    if (!isPremium && emailCreditsUsed === maxFreeCredits - 1) {
+      const shouldContinue = window.confirm(
+        "This will use your last free email credit. After this, you'll need to upgrade to Premium. Continue?"
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
+    // ✅ Warning for second-to-last credit
+    if (!isPremium && emailCreditsUsed === maxFreeCredits - 2) {
+      const shouldContinue = window.confirm(
+        `You have ${creditsRemaining} free email credits remaining. Continue?`
+      );
+      if (!shouldContinue) {
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -292,14 +351,15 @@ export default function EmployeesPage() {
   const handleOpenLinkedInPopup = () => {
     if (!linkedinPeopleSearchUrl) return;
 
-    // Better responsive sizing
+    // Get screen dimensions for centering
     const screenWidth = window.screen.width;
     const screenHeight = window.screen.height;
 
-    // Use 85% of screen size with reasonable limits
-    const width = Math.min(Math.max(screenWidth * 0.85, 1000), 1400);
-    const height = Math.min(Math.max(screenHeight * 0.85, 700), 900);
+    // Use more reasonable fixed dimensions for LinkedIn browsing
+    const width = 1000; // Fixed width - good for LinkedIn content
+    const height = 700; // Fixed height - shows enough content without being overwhelming
 
+    // Center the window
     const left = (screenWidth - width) / 2;
     const top = (screenHeight - height) / 2;
 
@@ -383,110 +443,86 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Employee Cards Section */}
-      {employees?.length > 0 ? (
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-6">Recommended Contacts</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {employees.map((employee, index) => (
-              <div
-                key={employee.id || index}
-                className={`
-                  relative border rounded-xl p-6 hover:shadow-lg transition-all duration-200 cursor-pointer
-                  ${selectedEmployee?.id === employee.id ? "ring-2 ring-blue-500 border-blue-200 bg-blue-50" : "hover:border-gray-300"}
-                  ${isLoading ? "opacity-50 pointer-events-none" : ""}
-                `}
-                onClick={() => handleSelectEmployee(employee)}
-              >
-                {/* Employee Info */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold text-lg">
-                      {employee.fullName?.charAt(0)?.toUpperCase() || "U"}
-                    </div>
+      {/* ✅ Enhanced Employees Section */}
+      {employees.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {employees.map((employee, index) => (
+            <div
+              key={employee.id || index}
+              className="bg-white border rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer group"
+              onClick={() => handleSelectEmployee(employee)}
+            >
+              {/* Employee Info */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold text-lg">
+                    {employee.fullName?.charAt(0)?.toUpperCase() || "U"}
                   </div>
-
-                  {/* Relevance Score Badge */}
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getRelevanceColor(employee.relevanceScore)}`}
-                  >
-                    {employee.relevanceScore}
-                  </span>
                 </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                      {employee.fullName}
-                    </h3>
-                    <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
-                  </div>
-
-                  {/* Location */}
-                  {employee.location && (
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      <span className="line-clamp-1">{employee.location}</span>
-                    </div>
-                  )}
-
-                  {/* LinkedIn Link */}
-                  {employee.linkedinUrl && (
-                    <div className="flex items-center text-sm text-blue-600">
-                      <Linkedin className="h-4 w-4 mr-1" />
-                      <a
-                        href={employee.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline line-clamp-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View Profile
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Credit Usage Info */}
-                  {!isPremium && (
-                    <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                      Uses 1 credit for email address generation
-                    </div>
-                  )}
-
-                  {/* Contact Button */}
-                  <Button
-                    className="w-full mt-4"
-                    size="sm"
-                    disabled={!isPremium && emailCreditsUsed >= maxFreeCredits}
-                  >
-                    {!isPremium && emailCreditsUsed >= maxFreeCredits
-                      ? "Upgrade Required"
-                      : "Contact This Person"}
-                  </Button>
-                </div>
+                {/* Relevance Score Badge */}
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium border ${getRelevanceColor(employee.relevanceScore)}`}
+                >
+                  {employee.relevanceScore}
+                </span>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                    {employee.fullName}
+                  </h3>
+                  <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
+                </div>
+
+                {/* Location */}
+                {employee.location && (
+                  <div className="flex items-center text-sm text-gray-500">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span className="line-clamp-1">{employee.location}</span>
+                  </div>
+                )}
+
+                {/* LinkedIn Link */}
+                {employee.linkedinUrl && (
+                  <div className="flex items-center text-sm text-blue-600">
+                    <Linkedin className="h-4 w-4 mr-1" />
+                    <a
+                      href={employee.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline line-clamp-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View Profile
+                    </a>
+                  </div>
+                )}
+
+                {/* Credit Usage Info */}
+                {!isPremium && (
+                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                    Uses 1 credit for email address generation
+                  </div>
+                )}
+
+                {/* Contact Button */}
+                <Button
+                  className="w-full mt-4"
+                  size="sm"
+                  disabled={!isPremium && emailCreditsUsed >= maxFreeCredits}
+                >
+                  {!isPremium && emailCreditsUsed >= maxFreeCredits
+                    ? "Upgrade Required"
+                    : "Contact This Person"}
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No contacts found</h3>
-          <p className="text-gray-600 mb-6">
-            We couldn't find any employees automatically. Let's try a different approach.
-          </p>
-
-          {/* Single CTA */}
-          <Button
-            onClick={() =>
-              document.getElementById("linkedin-paste")?.scrollIntoView({ behavior: "smooth" })
-            }
-            size="lg"
-            className="w-full max-w-sm mx-auto"
-          >
-            🔗 Find Employees on LinkedIn
-          </Button>
-        </div>
+        <EmptyEmployeesState onScrollToEmail={scrollToEmailGeneration} />
       )}
 
       {/* LinkedIn Paste Section */}
@@ -527,6 +563,14 @@ export default function EmployeesPage() {
                   <span>
                     {showLinkedInReminder ? "LinkedIn opened - Copy content" : "View on LinkedIn"}
                   </span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(linkedinPeopleSearchUrl, "_blank")}
+                  title="Open in new tab"
+                >
+                  <ExternalLink className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"

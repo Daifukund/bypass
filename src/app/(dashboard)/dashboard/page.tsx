@@ -169,6 +169,71 @@ export default function DashboardPage() {
     router.push("/criteria"); // Navigate to criteria page
   };
 
+  const FeedbackBanner = () => {
+    const [isVisible, setIsVisible] = useState(true);
+    const [feedback, setFeedback] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    if (!isVisible) return null;
+
+    const handleSubmitFeedback = async () => {
+      if (!feedback.trim()) return;
+
+      setIsSubmitting(true);
+      try {
+        // Create a mailto link
+        const subject = encodeURIComponent("Bypass MVP Feedback");
+        const body = encodeURIComponent(`User Feedback: ${feedback}\n\nFrom: ${user?.email}`);
+        const mailtoLink = `mailto:nathan.douziech@gmail.com?subject=${subject}&body=${body}`;
+
+        window.open(mailtoLink);
+        alert("Email client opened with your feedback. Please send the email!");
+        setIsVisible(false);
+      } catch (error) {
+        alert("Please email your feedback directly to nathan.douziech@gmail.com");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h4 className="font-semibold text-blue-900 mb-2">🚀 Help us improve Bypass!</h4>
+            <p className="text-blue-700 text-sm mb-3">
+              You're using our MVP! Your feedback helps us build exactly what you need.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="What would make Bypass better for you?"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                className="flex-1 px-3 py-2 border border-blue-300 rounded-lg text-sm"
+                onKeyPress={(e) => e.key === "Enter" && handleSubmitFeedback()}
+              />
+              <Button
+                onClick={handleSubmitFeedback}
+                disabled={isSubmitting || !feedback.trim()}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isSubmitting ? "Sending..." : "Send"}
+              </Button>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsVisible(false)}
+            className="text-blue-400 hover:text-blue-600 ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <WelcomeModal
@@ -284,17 +349,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Search History - With Pagination */}
+        {/* Search History - Mobile-Responsive Version */}
         <div className="bg-white rounded-lg border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-gray-900">Search History</h3>
               {totalItems > 0 && (
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 hidden sm:block">
                   Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} emails
                 </div>
               )}
             </div>
+            {/* Mobile count */}
+            {totalItems > 0 && (
+              <div className="text-sm text-gray-500 mt-2 sm:hidden">
+                {totalItems} email{totalItems !== 1 ? "s" : ""}
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -305,73 +376,154 @@ export default function DashboardPage() {
               </div>
             ) : currentItems.length > 0 ? (
               <>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Company
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {currentItems.map((record) => (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{record.company}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{record.contact}</div>
-                          <div className="text-sm text-gray-500">{record.contact_title}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 font-mono">{record.email}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(record.date).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => updateEmailStatus(record.id, record.status)}
-                            disabled={updatingStatus === record.id}
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors hover:opacity-80 ${
-                              record.status === "Email sent"
-                                ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                            } ${updatingStatus === record.id ? "opacity-50" : ""}`}
-                            title="Click to toggle status"
-                          >
-                            {updatingStatus === record.id ? (
-                              <div className="flex items-center gap-1">
-                                <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
-                                <span>Updating...</span>
-                              </div>
-                            ) : (
-                              record.status
-                            )}
-                          </button>
-                        </td>
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Company
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Contact
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {currentItems.map((record) => (
+                        <tr key={record.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {record.company}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{record.contact}</div>
+                            <div className="text-sm text-gray-500">{record.contact_title}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900 font-mono">{record.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(record.date).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => updateEmailStatus(record.id, record.status)}
+                              disabled={updatingStatus === record.id}
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors hover:opacity-80 ${
+                                record.status === "Email sent"
+                                  ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                  : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                              } ${updatingStatus === record.id ? "opacity-50" : ""}`}
+                              title="Click to toggle status"
+                            >
+                              {updatingStatus === record.id ? (
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Updating...</span>
+                                </div>
+                              ) : (
+                                record.status
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                {/* Pagination Controls */}
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200">
+                  {currentItems.map((record) => (
+                    <div key={record.id} className="p-4 hover:bg-gray-50">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {record.company}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {new Date(record.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => updateEmailStatus(record.id, record.status)}
+                          disabled={updatingStatus === record.id}
+                          className={`ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full cursor-pointer transition-colors hover:opacity-80 ${
+                            record.status === "Email sent"
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                          } ${updatingStatus === record.id ? "opacity-50" : ""}`}
+                          title="Click to toggle status"
+                        >
+                          {updatingStatus === record.id ? (
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          ) : record.status === "Email sent" ? (
+                            "✓"
+                          ) : (
+                            "○"
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-sm text-gray-900">{record.contact}</div>
+                          <div className="text-xs text-gray-500">{record.contact_title}</div>
+                        </div>
+                        <div className="text-sm text-gray-900 font-mono break-all bg-gray-50 px-2 py-1 rounded">
+                          {record.email}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile-Optimized Pagination */}
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      {/* Mobile: Simplified pagination */}
+                      <div className="flex items-center gap-2 md:hidden">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="h-8 px-2"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        <span className="text-sm text-gray-700 px-2">
+                          {currentPage} / {totalPages}
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="h-8 px-2"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Desktop: Full pagination */}
+                      <div className="hidden md:flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -409,7 +561,7 @@ export default function DashboardPage() {
                         </Button>
                       </div>
 
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 hidden md:block">
                         Page {currentPage} of {totalPages}
                       </div>
                     </div>
@@ -433,12 +585,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Pro Tip - Value-focused, not stats-focused */}
+        {/* Mobile-Optimized Pro Tip */}
         <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-200">
-          <div className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
+          <div className="p-4 sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-indigo-900 mb-2">
@@ -449,15 +601,27 @@ export default function DashboardPage() {
                   contacts. Our AI helps you find the right people and craft personalized messages
                   that get responses.
                 </p>
-                <div className="mt-3 flex items-center gap-4 text-xs text-indigo-600">
-                  <span>📈 3.2x more interviews</span>
-                  <span>⚡ 67% response rate</span>
-                  <span>🎯 5 days to first interview</span>
+                {/* Mobile: Stack stats vertically, Desktop: Horizontal */}
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-indigo-600">
+                  <span className="flex items-center gap-1">
+                    <span>📈</span>
+                    <span>3.2x more interviews</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span>⚡</span>
+                    <span>67% response rate</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span>🎯</span>
+                    <span>5 days to first interview</span>
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <FeedbackBanner />
       </div>
     </>
   );

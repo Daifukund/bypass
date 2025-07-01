@@ -109,39 +109,41 @@ export default function LandingPage() {
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 text-center max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
+      {/* Hero Section - Improved mobile spacing and text sizes */}
+      <section className="px-4 sm:px-6 py-8 sm:py-12 lg:py-20 text-center max-w-4xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight px-2">
           Get 3x More Interview Invitations by Bypassing Job Boards
         </h1>
-        <p className="text-base sm:text-lg md:text-xl mb-6 text-gray-600 max-w-2xl mx-auto">
+        <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 text-gray-600 max-w-2xl mx-auto px-2">
           90% of job applications get ignored. We fix that.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-4 px-2">
           <Link
             href="/signup"
-            className="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center"
+            className="bg-black text-white px-4 sm:px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center text-sm sm:text-base"
           >
             Get Started – No Credit Card Required
           </Link>
           <Link
             href="#demo"
-            className="text-gray-600 hover:text-gray-800 py-3 underline underline-offset-4 min-h-[44px] flex items-center justify-center transition-colors"
+            className="text-gray-600 hover:text-gray-800 py-3 underline underline-offset-4 min-h-[44px] flex items-center justify-center transition-colors text-sm sm:text-base"
           >
             See Demo
           </Link>
         </div>
-        <p className="text-sm text-gray-500">No credit card required • 1,200+ students hired</p>
+        <p className="text-xs sm:text-sm text-gray-500">
+          No credit card required • 1,200+ students hired
+        </p>
 
-        {/* Before vs After Comparison */}
-        <div className="mt-8 sm:mt-10 flex flex-col lg:flex-row gap-6 justify-center items-start max-w-6xl mx-auto">
+        {/* Before vs After Comparison - Side by side on desktop, stacked on mobile */}
+        <div className="mt-8 sm:mt-10 flex flex-col lg:flex-row gap-4 sm:gap-6 justify-center items-start max-w-6xl mx-auto">
           {/* Traditional Applications */}
           <div className="w-full lg:w-1/2">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-red-800 mb-4 text-center">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 shadow-sm">
+              <h3 className="text-base sm:text-lg font-semibold text-red-800 mb-3 sm:mb-4 text-center">
                 This is what most applications get you
               </h3>
-              <div className="space-y-3 text-sm text-gray-700">
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
                 <p>
                   <span className="bg-yellow-200 px-1 rounded">Unfortunately</span>, after careful
                   consideration, we've decided to move forward with other candidates whose
@@ -172,11 +174,11 @@ export default function LandingPage() {
 
           {/* Bypass Results */}
           <div className="w-full lg:w-1/2">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-green-800 mb-4 text-center">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-6 shadow-sm">
+              <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-3 sm:mb-4 text-center">
                 This is what Bypass users receive
               </h3>
-              <div className="space-y-4 text-sm text-gray-700">
+              <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700">
                 <div>
                   <p className="mb-2">
                     Hi, we'd be happy to schedule an interview with you. Would Wednesday at 2:00 PM
@@ -214,140 +216,142 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="bg-gray-50 py-12 sm:py-16 px-4 sm:px-6 text-center" id="trust">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-8">
+      {/* Social Proof - Better mobile university logos */}
+      <section className="bg-gray-50 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 text-center" id="trust">
+        <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 mb-6 sm:mb-8">
           Trusted by Students from Top Universities
         </h2>
-        <div className="flex flex-wrap justify-center items-center gap-8 mb-8">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap justify-center items-center gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           <Image
             src="/universities/hec.svg"
             alt="HEC Paris"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/bocconi.svg"
             alt="Bocconi"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/lse.svg"
             alt="London School of Economics"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/essec.svg"
             alt="ESSEC"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/berkley.svg"
             alt="Berkley"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/mit.svg"
             alt="MIT"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/imperial.svg"
             alt="Imperial"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/stanford.svg"
             alt="Stanford"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
           <Image
             src="/universities/oxford.svg"
             alt="Oxford"
             width={120}
             height={120}
-            className="opacity-70 hover:opacity-100 transition-opacity w-20 sm:w-24 h-auto"
+            className="opacity-70 hover:opacity-100 transition-opacity w-16 sm:w-20 lg:w-24 h-auto mx-auto"
           />
         </div>
-        <p className="text-lg sm:text-xl font-semibold mb-8">
+        <p className="text-sm sm:text-base lg:text-lg xl:text-xl font-semibold mb-6 sm:mb-8 px-2">
           Used by 1,200+ students to land jobs at LVMH, McKinsey, Goldman Sachs, Google, BCG, Amazon
           and more.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-3xl mb-2">📈</div>
-            <div className="text-3xl font-bold text-green-600 mb-1">3.2x</div>
-            <div className="text-sm text-gray-600">more interview invitations</div>
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-2xl sm:text-3xl mb-2">📈</div>
+            <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-1">3.2x</div>
+            <div className="text-xs sm:text-sm text-gray-600">more interview invitations</div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-3xl mb-2">📬</div>
-            <div className="text-3xl font-bold text-blue-600 mb-1">67%</div>
-            <div className="text-sm text-gray-600">response rate vs 2% on job boards</div>
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-2xl sm:text-3xl mb-2">📬</div>
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1">67%</div>
+            <div className="text-xs sm:text-sm text-gray-600">
+              response rate vs 2% on job boards
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-3xl mb-2">⏱️</div>
-            <div className="text-3xl font-bold text-purple-600 mb-1">5 days</div>
-            <div className="text-sm text-gray-600">avg time to first interview</div>
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-2xl sm:text-3xl mb-2">⏱️</div>
+            <div className="text-2xl sm:text-3xl font-bold text-purple-600 mb-1">5 days</div>
+            <div className="text-xs sm:text-sm text-gray-600">avg time to first interview</div>
           </div>
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 text-center" id="how">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">How it Works</h2>
-        <div className="grid sm:grid-cols-3 gap-6 sm:gap-8 text-center max-w-6xl mx-auto">
-          <div>
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🎯</span>
+      {/* How it Works - Better mobile layout */}
+      <section className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 text-center" id="how">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6 sm:mb-8">How it Works</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center max-w-6xl mx-auto">
+          <div className="px-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl sm:text-3xl">🎯</span>
             </div>
-            <div className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mx-auto mb-3">
+            <div className="bg-red-500 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-sm sm:text-lg font-bold mx-auto mb-3">
               1
             </div>
-            <h3 className="font-bold text-xl mb-3">Target</h3>
-            <p className="text-gray-600">
+            <h3 className="font-bold text-lg sm:text-xl mb-3">Target</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Tell us your dream role and industry
               <br />→ AI finds 50+ hiring companies
             </p>
           </div>
 
-          <div>
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🔍</span>
+          <div className="px-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl sm:text-3xl">🔍</span>
             </div>
-            <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mx-auto mb-3">
+            <div className="bg-blue-500 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-sm sm:text-lg font-bold mx-auto mb-3">
               2
             </div>
-            <h3 className="font-bold text-xl mb-3">Connect</h3>
-            <p className="text-gray-600">
+            <h3 className="font-bold text-lg sm:text-xl mb-3">Connect</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Pick companies
               <br />→ We find the right people
             </p>
           </div>
 
-          <div>
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">💬</span>
+          <div className="px-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl sm:text-3xl">💬</span>
             </div>
-            <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold mx-auto mb-3">
+            <div className="bg-green-500 text-white rounded-full w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center text-sm sm:text-lg font-bold mx-auto mb-3">
               3
             </div>
-            <h3 className="font-bold text-xl mb-3">Contact</h3>
-            <p className="text-gray-600">
+            <h3 className="font-bold text-lg sm:text-xl mb-3">Contact</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Get verified emails + personalized
               <br />
               messages that get replies
@@ -355,40 +359,44 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="mt-8 p-5 bg-gray-50 rounded-xl max-w-3xl mx-auto">
-          <p className="text-base">
+        <div className="mt-6 sm:mt-8 p-4 sm:p-5 bg-gray-50 rounded-xl max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base">
             <span className="font-medium text-red-600">Traditional:</span> 3–6 months, 200+ apps
-            <span className="mx-3 text-lg">VS</span>
+            <span className="mx-2 sm:mx-3 text-base sm:text-lg">VS</span>
             <span className="font-medium text-green-600">Bypass:</span> 2–3 weeks, 20 contacts
           </p>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-gray-100 py-12 sm:py-16 px-4 sm:px-6" id="features">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-10">What You Get</h2>
-        <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold text-lg mb-2">🚀 Smart Company Discovery</h3>
-            <p className="text-gray-600">
+      {/* Features - Better mobile cards */}
+      <section className="bg-gray-100 py-8 sm:py-12 lg:py-16 px-4 sm:px-6" id="features">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-center mb-6 sm:mb-8 lg:mb-10">
+          What You Get
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold text-base sm:text-lg mb-2">🚀 Smart Company Discovery</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Our AI identifies companies hiring for your profile—not just posting generic jobs.
             </p>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold text-lg mb-2">🎯 Decision-Maker Detection</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold text-base sm:text-lg mb-2">🎯 Decision-Maker Detection</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Skip HR. Get access to hiring managers, leads, and founders directly.
             </p>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold text-lg mb-2">🤖 AI Message Crafting</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold text-base sm:text-lg mb-2">🤖 AI Message Crafting</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Get personalized emails referencing company news, pain points, and projects.
             </p>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold text-lg mb-2">📧 Verified Contact Data</h3>
-            <p className="text-gray-600">85% accuracy. Real people, real results.</p>
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold text-base sm:text-lg mb-2">📧 Verified Contact Data</h3>
+            <p className="text-sm sm:text-base text-gray-600">
+              85% accuracy. Real people, real results.
+            </p>
           </div>
         </div>
       </section>
@@ -411,63 +419,65 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="bg-gray-50 py-12 sm:py-16 px-4 sm:px-6 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8">Student Results</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-4xl mb-3">🎯</div>
-            <blockquote className="text-gray-700 mb-3 italic">
+      {/* Testimonials - Better mobile layout */}
+      <section className="bg-gray-50 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 text-center">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6 sm:mb-8">Student Results</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-3xl sm:text-4xl mb-3">🎯</div>
+            <blockquote className="text-sm sm:text-base text-gray-700 mb-3 italic">
               "Got 3 interviews in one week using Bypass. Way better than sending 100+ applications
               on LinkedIn."
             </blockquote>
-            <p className="text-sm font-medium text-gray-900">Sarah, HEC Paris</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-900">Sarah, HEC Paris</p>
             <p className="text-xs text-gray-500">Marketing Role at LVMH</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-4xl mb-3">⚡</div>
-            <blockquote className="text-gray-700 mb-3 italic">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-3xl sm:text-4xl mb-3">⚡</div>
+            <blockquote className="text-sm sm:text-base text-gray-700 mb-3 italic">
               "Landed my dream consulting job in 2 weeks. The personalized emails actually get
               responses."
             </blockquote>
-            <p className="text-sm font-medium text-gray-900">Marcus, LSE</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-900">Marcus, LSE</p>
             <p className="text-xs text-gray-500">Consultant at McKinsey</p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-4xl mb-3">🚀</div>
-            <blockquote className="text-gray-700 mb-3 italic">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <div className="text-3xl sm:text-4xl mb-3">🚀</div>
+            <blockquote className="text-sm sm:text-base text-gray-700 mb-3 italic">
               "Finally broke into tech! Bypass helped me connect directly with hiring managers
               instead of HR."
             </blockquote>
-            <p className="text-sm font-medium text-gray-900">Emma, Berkeley</p>
+            <p className="text-xs sm:text-sm font-medium text-gray-900">Emma, Berkeley</p>
             <p className="text-xs text-gray-500">Product Manager at Google</p>
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 text-center" id="pricing">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4">Pricing</h2>
-        <p className="text-gray-600 mb-2">Free forever. Pay only if you need more credits.</p>
-        <p className="text-sm text-green-600 font-medium mb-8">
+      {/* Pricing - Better mobile cards */}
+      <section className="py-8 sm:py-12 lg:py-16 px-4 sm:px-6 text-center" id="pricing">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4">Pricing</h2>
+        <p className="text-sm sm:text-base text-gray-600 mb-2">
+          Free forever. Pay only if you need more credits.
+        </p>
+        <p className="text-xs sm:text-sm text-green-600 font-medium mb-6 sm:mb-8">
           ✅ Most users get hired on the free plan
         </p>
 
-        <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <div className="border rounded-xl p-6 bg-white shadow-sm relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          <div className="border rounded-xl p-4 sm:p-6 bg-white shadow-sm relative">
+            <div className="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2">
+              <span className="bg-blue-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
                 Perfect for trying out Bypass
               </span>
             </div>
-            <h3 className="text-xl font-semibold mb-4 mt-2">Free Plan</h3>
-            <div className="mb-6">
-              <div className="text-3xl font-bold">€0</div>
-              <div className="text-sm text-gray-500">Forever</div>
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 mt-2">Free Plan</h3>
+            <div className="mb-4 sm:mb-6">
+              <div className="text-2xl sm:text-3xl font-bold">€0</div>
+              <div className="text-xs sm:text-sm text-gray-500">Forever</div>
             </div>
-            <ul className="text-sm text-left space-y-4 mb-6">
+            <ul className="text-xs sm:text-sm text-left space-y-3 sm:space-y-4 mb-4 sm:mb-6">
               <li className="flex items-start gap-3">
                 <div className="w-5 h-5 bg-gray-100 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-xs">🏢</span>
@@ -516,25 +526,25 @@ export default function LandingPage() {
             </ul>
             <Link
               href="/signup"
-              className="block w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              className="block w-full bg-gray-100 text-gray-800 px-4 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors text-sm sm:text-base"
             >
               Get Started Free
             </Link>
             <p className="text-xs text-gray-500 mt-2">No credit card required</p>
           </div>
 
-          <div className="border rounded-xl p-6 bg-black text-white shadow-lg relative">
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-medium">
+          <div className="border rounded-xl p-4 sm:p-6 bg-black text-white shadow-lg relative">
+            <div className="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2">
+              <span className="bg-yellow-400 text-yellow-900 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
                 ⚡ For serious job seekers
               </span>
             </div>
-            <h3 className="text-xl font-semibold mb-4 mt-2">Premium — €9.99</h3>
-            <div className="mb-6">
-              <div className="text-3xl font-bold">€9.99</div>
-              <div className="text-sm text-gray-300">per month</div>
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 mt-2">Premium — €9.99</h3>
+            <div className="mb-4 sm:mb-6">
+              <div className="text-2xl sm:text-3xl font-bold">€9.99</div>
+              <div className="text-xs sm:text-sm text-gray-300">per month</div>
             </div>
-            <ul className="text-sm text-left space-y-4 mb-6">
+            <ul className="text-xs sm:text-sm text-left space-y-3 sm:space-y-4 mb-4 sm:mb-6">
               <li className="flex items-start gap-3">
                 <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-xs text-white">✓</span>
@@ -583,7 +593,7 @@ export default function LandingPage() {
             </ul>
             <Link
               href="/signup"
-              className="block w-full bg-white text-black px-4 py-3 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+              className="block w-full bg-white text-black px-4 py-3 rounded-xl font-medium hover:bg-gray-100 transition-colors text-sm sm:text-base"
             >
               Upgrade to Premium
             </Link>
@@ -623,96 +633,109 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Q&A */}
-      <section className="bg-gray-100 py-12 sm:py-16 px-4 sm:px-6 max-w-5xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">
+      {/* Q&A - Better mobile spacing */}
+      <section className="bg-gray-100 py-8 sm:py-12 lg:py-16 px-4 sm:px-6 max-w-5xl mx-auto">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-6 sm:mb-8 text-center">
           Frequently Asked Questions
         </h2>
-        <div className="space-y-6">
-          {/* Most Important Questions First */}
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">Is this better than LinkedIn Premium?</h3>
-            <p className="text-gray-600">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              Is this better than LinkedIn Premium?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               LinkedIn shows you who's hiring. Bypass shows you who to contact and what to say.
               Plus, you're not competing with 500 other "InMail" messages. Our users get 67%
               response rates vs 2% on job boards.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">Can I try before buying?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">Can I try before buying?</h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               Absolutely! Use Bypass completely free – no credit card, no commitment. You get 5
               email address generations. Most users get their first interview invitation before
               upgrading.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">How accurate are the email addresses?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              How accurate are the email addresses?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               85%+ accuracy rate. Real people, real emails, real results.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
               What's the success rate? Do people actually get hired?
             </h3>
-            <p className="text-gray-600">
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               Our users get 3.2x more interview invitations and land jobs 2-3x faster than
               traditional methods. Over 1,200+ students have used Bypass to get hired at companies
               like McKinsey, LVMH, Google, and JPMorgan.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">Is this legal/ethical?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">Is this legal/ethical?</h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               100% legal and ethical. We only use publicly available information and follow GDPR
               guidelines. Think of it as smart networking, not cold emailing. We're helping you
               connect professionally, not spam.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">How is this different from cold emailing?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              How is this different from cold emailing?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               Our AI crafts personalized messages that reference company news, recent projects, and
               pain points. It's not generic "I'm interested in opportunities" emails – it's
               intelligent, relevant outreach that gets responses.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">How long does it take to see results?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              How long does it take to see results?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               Most users get their first positive response within 48 hours. Average time to first
               interview is 5 days. Compare that to 3-6 months of traditional job searching.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">What if I don't get any responses?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              What if I don't get any responses?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               We provide email templates, messaging tips, and support to maximize your success. If
               you're not getting responses, our team will help you optimize your approach. Most
               issues are easily fixable.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">Do you work for all industries?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              Do you work for all industries?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               Yes! Our AI works across all industries – tech, consulting, finance, marketing,
               healthcare, and more. We've helped students land jobs in startups, Fortune 500
               companies, and everything in between.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-2">What happens after I send the emails?</h3>
-            <p className="text-gray-600">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">
+              What happens after I send the emails?
+            </h3>
+            <p className="text-xs sm:text-sm lg:text-base text-gray-600">
               You'll typically get responses within 24-48 hours. Some will be interview invitations,
               others might be referrals or requests for more info. We provide guidance on how to
               handle each type of response to maximize your chances.
@@ -732,18 +755,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white border-t py-12 px-4 sm:px-6">
+      {/* Footer - Better mobile layout */}
+      <footer className="bg-white border-t py-8 sm:py-12 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           {/* Main Footer Content */}
-          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
             {/* Brand Column */}
-            <div className="sm:col-span-1">
-              <div className="text-xl font-bold mb-4">Bypass</div>
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="text-center sm:text-left">
+              <div className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Bypass</div>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Skip the job board queue. Connect directly with decision-makers.
               </p>
-              <div className="flex gap-3">
+              <div className="flex justify-center sm:justify-start gap-3">
                 <Link
                   href="https://linkedin.com"
                   target="_blank"
@@ -774,10 +797,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Product Column */}
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
+            {/* Product & Support Columns - Better mobile layout */}
+            <div className="text-center sm:text-left">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h4>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-600">
                 <li>
                   <Link href="#how" className="hover:text-gray-800 transition-colors">
                     How it Works
@@ -801,10 +824,9 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Support Column */}
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
+            <div className="text-center sm:text-left">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
+              <ul className="space-y-2 text-xs sm:text-sm text-gray-600">
                 <li>
                   <a
                     href="mailto:nathan.douziech@gmail.com"
@@ -827,16 +849,18 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="border-t pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+          {/* Bottom Bar - Better mobile stacking */}
+          <div className="border-t pt-6 sm:pt-8 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
               <span>Bypass • Trusted by 1,200+ students</span>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 <span>47 students got interviews this week</span>
               </div>
             </div>
-            <p className="text-sm text-gray-500">© 2025 Bypass. All rights reserved.</p>
+            <p className="text-xs sm:text-sm text-gray-500 text-center sm:text-right">
+              © 2025 Bypass. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>

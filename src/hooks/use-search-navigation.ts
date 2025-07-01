@@ -1,5 +1,6 @@
 import { useSearchStore } from "@/stores/search-store";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export const useSearchNavigation = () => {
   const { criteria, companies, selectedCompany, employees, selectedEmployee } = useSearchStore();
@@ -9,13 +10,34 @@ export const useSearchNavigation = () => {
   const canNavigateToEmployees = () => !!selectedCompany;
   const canNavigateToEmails = () => !!selectedEmployee;
 
-  const navigateToStep = (step: "criteria" | "companies" | "employees" | "emails") => {
+  // ✅ Enhanced navigation with user confirmation
+  const navigateToStep = (
+    step: "criteria" | "companies" | "employees" | "emails",
+    force = false
+  ) => {
+    const confirmNavigation = (message: string) => {
+      if (force) return true;
+      return window.confirm(`${message}\n\nYour current progress will be saved. Continue?`);
+    };
+
     switch (step) {
       case "criteria":
+        if (
+          selectedEmployee &&
+          !confirmNavigation("Going back to criteria will start a new search.")
+        ) {
+          return;
+        }
         router.push("/criteria");
         break;
       case "companies":
         if (canNavigateToCompanies()) {
+          if (
+            selectedEmployee &&
+            !confirmNavigation("Going back to companies will lose your current employee selection.")
+          ) {
+            return;
+          }
           router.push("/companies");
         } else {
           router.push("/criteria");
@@ -43,6 +65,19 @@ export const useSearchNavigation = () => {
         break;
     }
   };
+
+  // ✅ Add browser back button protection
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (selectedEmployee || selectedCompany) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved progress. Are you sure you want to leave?";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [selectedEmployee, selectedCompany]);
 
   return {
     canNavigateToCompanies,

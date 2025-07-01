@@ -200,11 +200,11 @@ Return ONLY the JSON object, nothing else.`,
     const senderName =
       userInfo?.firstName && userInfo?.lastName
         ? `${userInfo.firstName} ${userInfo.lastName}`
-        : "Student"; // Don't use placeholder brackets
+        : "[Student]"; // Use bracket placeholder
 
-    const university = userInfo?.university || "my university";
-    const studyLevel = userInfo?.studyLevel || "student";
-    const fieldOfStudy = userInfo?.fieldOfStudy || "my field of study";
+    const university = userInfo?.university || "[University]";
+    const studyLevel = userInfo?.studyLevel || "[Student]";
+    const fieldOfStudy = userInfo?.fieldOfStudy || "[Field of Study]";
     const phone = userInfo?.phone || "";
     const linkedin = userInfo?.linkedin || "";
 
