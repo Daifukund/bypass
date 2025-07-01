@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { Home, Search } from "lucide-react";
+import { GoBackButton } from "@/components/ui/go-back-button";
 
 export default function NotFound() {
   return (
@@ -62,13 +63,7 @@ export default function NotFound() {
               </Link>
             </div>
 
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 transition-colors text-sm"
-            >
-              <ArrowLeft size={16} />
-              Go Back
-            </button>
+            <GoBackButton />
           </div>
 
           {/* Help Section */}
