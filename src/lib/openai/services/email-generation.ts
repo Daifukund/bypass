@@ -6,7 +6,7 @@
 import { openai } from "@/lib/openai/client";
 import { OPENAI_PROMPTS, OPENAI_CONFIG } from "@/constants/prompts";
 import { parseEmailContent } from "@/lib/openai/utils";
-import { EmailContent, EmailType } from "@/lib/openai/types";
+import { EmailContent, EmailType, UserProfile } from "@/lib/openai/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Types for email generation
@@ -17,15 +17,7 @@ export interface EmailGenerationParams {
   location?: string;
   emailType: EmailType;
   language: string;
-  userProfile?: {
-    firstName?: string;
-    lastName?: string;
-    university?: string;
-    studyLevel?: string;
-    fieldOfStudy?: string;
-    phone?: string;
-    linkedin?: string;
-  };
+  userProfile?: UserProfile;
 }
 
 export interface CreditCheckResult {

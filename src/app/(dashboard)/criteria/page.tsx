@@ -23,6 +23,7 @@ import { SalarySelector } from "@/components/ui/salary-selector";
 import { KeywordsSelector } from "@/components/ui/keywords-selector";
 import { ExcludeCompaniesSelector } from "@/components/ui/exclude-companies-selector";
 import { FieldWithTooltip } from "@/components/ui/field-with-tooltip";
+import posthog from "posthog-js";
 
 // Define the criteria interface to match the store
 interface SearchCriteria {
@@ -163,6 +164,15 @@ export default function CriteriaPage() {
   }, [targetProgress, showProgress, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Track when user starts a job search
+    posthog.capture("job_search_started", {
+      job_title: criteria.jobTitle,
+      has_location: !!criteria.location,
+      has_industry: !!criteria.industry,
+    });
+
     setTargetProgress(0);
     setShowProgress(true);
 

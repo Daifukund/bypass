@@ -15,6 +15,7 @@ export interface Database {
           linkedin: string | null;
           language: string | null;
           bio_text: string | null;
+          personal_website: string | null;
           plan: "freemium" | "premium";
           email_credits: number;
           created_at: string;
@@ -32,6 +33,7 @@ export interface Database {
           linkedin?: string | null;
           language?: string | null;
           bio_text?: string | null;
+          personal_website?: string | null;
           plan?: "freemium" | "premium";
           email_credits?: number;
           created_at?: string;
@@ -49,6 +51,7 @@ export interface Database {
           linkedin?: string | null;
           language?: string | null;
           bio_text?: string | null;
+          personal_website?: string | null;
           plan?: "freemium" | "premium";
           email_credits?: number;
           created_at?: string;
@@ -275,26 +278,17 @@ export type User = Database["public"]["Tables"]["users"]["Row"];
 export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
 export type UserUpdate = Database["public"]["Tables"]["users"]["Update"];
 
-export type SearchCriteria =
-  Database["public"]["Tables"]["search_criteria"]["Row"];
-export type SearchCriteriaInsert =
-  Database["public"]["Tables"]["search_criteria"]["Insert"];
+export type SearchCriteria = Database["public"]["Tables"]["search_criteria"]["Row"];
+export type SearchCriteriaInsert = Database["public"]["Tables"]["search_criteria"]["Insert"];
 
-export type CompanyRow =
-  Database["public"]["Tables"]["company_suggestions"]["Row"];
-export type CompanyInsert =
-  Database["public"]["Tables"]["company_suggestions"]["Insert"];
+export type CompanyRow = Database["public"]["Tables"]["company_suggestions"]["Row"];
+export type CompanyInsert = Database["public"]["Tables"]["company_suggestions"]["Insert"];
 
-export type EmployeeRow =
-  Database["public"]["Tables"]["employee_contacts"]["Row"];
-export type EmployeeInsert =
-  Database["public"]["Tables"]["employee_contacts"]["Insert"];
+export type EmployeeRow = Database["public"]["Tables"]["employee_contacts"]["Row"];
+export type EmployeeInsert = Database["public"]["Tables"]["employee_contacts"]["Insert"];
 
-export type EmailGeneration =
-  Database["public"]["Tables"]["email_generation"]["Row"];
-export type EmailGenerationInsert =
-  Database["public"]["Tables"]["email_generation"]["Insert"];
+export type EmailGeneration = Database["public"]["Tables"]["email_generation"]["Row"];
+export type EmailGenerationInsert = Database["public"]["Tables"]["email_generation"]["Insert"];
 
 export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
-export type SubscriptionInsert =
-  Database["public"]["Tables"]["subscriptions"]["Insert"];
+export type SubscriptionInsert = Database["public"]["Tables"]["subscriptions"]["Insert"];

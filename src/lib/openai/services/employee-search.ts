@@ -22,12 +22,7 @@ import {
   generateRequestId,
   withRetry,
 } from "../utils";
-import {
-  SearchResult,
-  Employee,
-  WebSearchResponse,
-  OpenAIRequestConfig,
-} from "../types";
+import { SearchResult, Employee, WebSearchResponse, OpenAIRequestConfig } from "../types";
 
 interface EmployeeSearchCriteria {
   companyName: string;
@@ -38,6 +33,7 @@ interface EmployeeSearchCriteria {
 // Define a specific result type for employee search
 interface EmployeeSearchResult extends SearchResult<Employee> {
   linkedinPeopleSearchUrl?: string;
+  error?: string;
 }
 
 /**
@@ -49,9 +45,7 @@ export class EmployeeSearchService {
    * Search for employees at a specific company
    * Uses OpenAI web search when available, falls back to standard completion
    */
-  static async searchEmployees(
-    criteria: EmployeeSearchCriteria,
-  ): Promise<EmployeeSearchResult> {
+  static async searchEmployees(criteria: EmployeeSearchCriteria): Promise<EmployeeSearchResult> {
     const requestId = generateRequestId();
     const prompt = OPENAI_PROMPTS.EMPLOYEE_DISCOVERY(criteria);
 
@@ -61,31 +55,32 @@ export class EmployeeSearchService {
       requestId,
     });
 
-    try {
-      // Try web search first if available
-      if (supportsWebSearch()) {
-        return await this.searchWithWebSearch(criteria, prompt, requestId);
-      } else {
-        console.log("⚠️ Web search not available, using standard completion");
-        return await this.searchWithStandardCompletion(
-          criteria,
-          prompt,
-          requestId,
-        );
-      }
-    } catch (error) {
-      console.error("❌ Employee search failed, attempting fallback");
+    // Debug web search support
+    console.log("🔍 Checking web search support...");
+    console.log("- supportsWebSearch():", supportsWebSearch());
 
-      // Fallback to standard completion if web search fails
-      try {
-        return await this.searchWithStandardCompletion(
-          criteria,
-          prompt,
-          requestId,
-        );
-      } catch (fallbackError) {
-        throw handleOpenAIError(fallbackError, "Employee Search");
-      }
+    if (!supportsWebSearch()) {
+      console.error("❌ Web search not supported - this should not happen with OpenAI v5.3.0+");
+      throw new Error("Web search is required for employee search but is not available");
+    }
+
+    try {
+      console.log("🚀 Using web search for employee discovery...");
+      return await this.searchWithWebSearch(criteria, prompt, requestId);
+    } catch (error) {
+      console.error("❌ Employee search failed:", error);
+
+      // Don't fallback to standard model - it's useless for employee search
+      // Instead, return empty result with proper error info
+      return {
+        data: [],
+        citations: [],
+        usedWebSearch: false,
+        requestId,
+        timestamp: new Date(),
+        linkedinPeopleSearchUrl: undefined,
+        error: `Failed to search for employees: ${error instanceof Error ? error.message : String(error)}`,
+      };
     }
   }
 
@@ -96,12 +91,12 @@ export class EmployeeSearchService {
   private static async searchWithWebSearch(
     criteria: EmployeeSearchCriteria,
     prompt: string,
-    requestId: string,
+    requestId: string
   ): Promise<EmployeeSearchResult> {
     // Check if OpenAI client is available
     if (!openai) {
       throw new Error(
-        "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable.",
+        "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable."
       );
     }
 
@@ -113,20 +108,15 @@ export class EmployeeSearchService {
       input: prompt,
     };
 
-    console.log(
-      "📤 Web Search Request Payload:",
-      JSON.stringify(requestPayload, null, 2),
-    );
+    console.log("📤 Web Search Request Payload:", JSON.stringify(requestPayload, null, 2));
 
     // Use retry wrapper for reliability
     const response = await withRetry(
       async () => {
-        return (await openai!.responses.create(
-          requestPayload,
-        )) as WebSearchResponse;
+        return (await openai!.responses.create(requestPayload)) as WebSearchResponse;
       },
       2,
-      2000,
+      2000
     );
 
     // Log the full response
@@ -144,10 +134,7 @@ export class EmployeeSearchService {
     }
 
     console.log("📄 Extracted Text:", text);
-    console.log(
-      "🔗 Annotations/Citations:",
-      JSON.stringify(annotations, null, 2),
-    );
+    console.log("🔗 Annotations/Citations:", JSON.stringify(annotations, null, 2));
 
     // Extract and validate employee data
     const rawData = extractAndParseJSON(text);
@@ -159,8 +146,7 @@ export class EmployeeSearchService {
     if (rawData && typeof rawData === "object" && "employees" in rawData) {
       // New format with LinkedIn People Search URL
       employees = validateEmployeeData((rawData as any).employees || []);
-      linkedinPeopleSearchUrl =
-        (rawData as any).linkedin_people_search_url || undefined;
+      linkedinPeopleSearchUrl = (rawData as any).linkedin_people_search_url || undefined;
     } else if (Array.isArray(rawData)) {
       // Legacy format - just employees array
       employees = validateEmployeeData(rawData);
@@ -192,12 +178,12 @@ export class EmployeeSearchService {
   private static async searchWithStandardCompletion(
     criteria: EmployeeSearchCriteria,
     prompt: string,
-    requestId: string,
+    requestId: string
   ): Promise<EmployeeSearchResult> {
     // Check if OpenAI client is available
     if (!openai) {
       throw new Error(
-        "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable.",
+        "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable."
       );
     }
 
@@ -217,10 +203,7 @@ export class EmployeeSearchService {
       ],
     };
 
-    console.log(
-      "📤 Standard Completion Config:",
-      JSON.stringify(config, null, 2),
-    );
+    console.log("📤 Standard Completion Config:", JSON.stringify(config, null, 2));
 
     // Use retry wrapper for reliability
     const response = await withRetry(
@@ -233,7 +216,7 @@ export class EmployeeSearchService {
         });
       },
       2,
-      1000,
+      1000
     );
 
     // Log the full response
@@ -256,8 +239,7 @@ export class EmployeeSearchService {
     if (rawData && typeof rawData === "object" && "employees" in rawData) {
       // New format with LinkedIn People Search URL
       employees = validateEmployeeData((rawData as any).employees || []);
-      linkedinPeopleSearchUrl =
-        (rawData as any).linkedin_people_search_url || undefined;
+      linkedinPeopleSearchUrl = (rawData as any).linkedin_people_search_url || undefined;
     } else if (Array.isArray(rawData)) {
       // Legacy format - just employees array
       employees = validateEmployeeData(rawData);

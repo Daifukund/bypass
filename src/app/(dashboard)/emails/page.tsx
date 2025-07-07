@@ -21,7 +21,8 @@ interface UserProfile {
 }
 
 export default function EmailsPage() {
-  const { selectedEmployee, selectedCompany, generatedEmail, setGeneratedEmail } = useSearchStore();
+  const { selectedEmployee, selectedCompany, generatedEmail, setGeneratedEmail, companies } =
+    useSearchStore();
   const supabase = useSupabase();
   const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -36,8 +37,6 @@ export default function EmailsPage() {
   const [emailCopied, setEmailCopied] = useState(false);
   const [contentCopied, setContentCopied] = useState(false);
   const [creditError, setCreditError] = useState("");
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
   const [isGeneratingEmail, setIsGeneratingEmail] = useState(false);
 
   // ✅ Add state to track if store has been rehydrated
@@ -393,20 +392,14 @@ export default function EmailsPage() {
         const result = await response.json();
         console.log("✅ Email generation result:", result);
 
-        // Store subject and body separately instead of trying to fix encoding
-        if (result.subject && result.body) {
-          setEmailSubject(result.subject);
-          setEmailBody(result.body);
+        // ✅ FIXED: Combine subject and body in proper format for display
+        const displayEmail = `Subject: ${result.subject}\n\n${result.body}`;
+        setGeneratedEmail(displayEmail);
 
-          // Combine for display in textarea
-          const displayEmail = `Subject: ${result.subject}\n\n${result.body}`;
-          setGeneratedEmail(displayEmail);
-
-          console.log("📧 Email content set:", {
-            subject: result.subject,
-            body: result.body.substring(0, 50) + "...",
-          });
-        }
+        console.log("📧 Email content set:", {
+          subject: result.subject,
+          body: result.body.substring(0, 50) + "...",
+        });
       } else {
         const errorData = await response.json();
         console.error("❌ Email generation failed:", errorData);
@@ -436,28 +429,49 @@ export default function EmailsPage() {
   const createMailtoLink = () => {
     if (!guessedEmail) return "#";
 
-    let subject = emailSubject;
-    let body = emailBody;
+    let subject = "";
+    let body = "";
 
-    // If we don't have separate subject/body, parse from generatedEmail
-    if (!subject || !body) {
-      if (generatedEmail.startsWith("Subject:")) {
-        const lines = generatedEmail.split("\n");
-        subject = lines[0].replace("Subject:", "").trim();
-        const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
-        body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
-      } else {
-        subject = `Invitation à un échange informel`;
-        body = generatedEmail;
+    // Parse from the current generatedEmail (which includes user edits)
+    if (generatedEmail.startsWith("Subject:")) {
+      const lines = generatedEmail.split("\n");
+      subject = lines[0].replace("Subject:", "").trim();
+
+      // Find the first non-empty line after the subject line as the start of body
+      let bodyLines = [];
+      let foundBodyStart = false;
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Skip empty lines until we find content
+        if (!foundBodyStart && line.trim() === "") {
+          continue;
+        }
+
+        // Once we find content, include everything (including empty lines for formatting)
+        if (!foundBodyStart && line.trim() !== "") {
+          foundBodyStart = true;
+        }
+
+        if (foundBodyStart) {
+          bodyLines.push(line);
+        }
       }
+
+      body = bodyLines.join("\n").trim();
+    } else {
+      // If no subject format, treat entire content as body and use a generic subject
+      subject = `Regarding opportunities at ${selectedCompany?.name}`;
+      body = generatedEmail.trim();
     }
 
-    // Ensure we have content
+    // Only use fallbacks if content is truly empty (this should rarely happen)
     if (!subject.trim()) {
-      subject = `Invitation à un échange informel`;
+      subject = `Regarding opportunities at ${selectedCompany?.name}`;
     }
     if (!body.trim()) {
-      body = `Bonjour,\n\nJ'aimerais échanger avec vous.\n\nCordialement`;
+      body = `Hello,\n\nI would like to connect with you.\n\nBest regards`;
     }
 
     console.log("📧 Creating mailto with:", {
@@ -465,7 +479,6 @@ export default function EmailsPage() {
       body: body.substring(0, 50) + "...",
     });
 
-    // Simple, clean encoding - only encode once
     const encodedSubject = encodeURIComponent(subject);
     const encodedBody = encodeURIComponent(body);
 
@@ -475,7 +488,6 @@ export default function EmailsPage() {
     return mailtoLink;
   };
 
-  // Add a new function to handle the email sending with better error handling
   const handleSendEmail = (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -494,20 +506,18 @@ export default function EmailsPage() {
     } catch (error) {
       console.error("❌ Error opening mailto link:", error);
 
-      // Get subject and body for fallback
-      let subject = emailSubject;
-      let body = emailBody;
+      // For fallback, use the current generatedEmail content
+      let subject = "";
+      let body = "";
 
-      if (!subject || !body) {
-        if (generatedEmail.startsWith("Subject:")) {
-          const lines = generatedEmail.split("\n");
-          subject = lines[0].replace("Subject:", "").trim();
-          const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
-          body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
-        } else {
-          subject = `Regarding opportunities at ${selectedCompany?.name}`;
-          body = generatedEmail;
-        }
+      if (generatedEmail.startsWith("Subject:")) {
+        const lines = generatedEmail.split("\n");
+        subject = lines[0].replace("Subject:", "").trim();
+        const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
+        body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
+      } else {
+        subject = `Regarding opportunities at ${selectedCompany?.name}`;
+        body = generatedEmail;
       }
 
       // Fallback: copy to clipboard and show instructions
@@ -523,6 +533,124 @@ export default function EmailsPage() {
             `Could not open email client. Please copy this information manually:\n\nTo: ${guessedEmail}\nSubject: ${subject}\n\n${body}`
           );
         });
+    }
+  };
+
+  const createGmailComposeLink = () => {
+    if (!guessedEmail) return "#";
+
+    let subject = "";
+    let body = "";
+
+    // If we don't have separate subject/body, parse from generatedEmail
+    if (!subject || !body) {
+      if (generatedEmail.startsWith("Subject:")) {
+        const lines = generatedEmail.split("\n");
+        subject = lines[0].replace("Subject:", "").trim();
+        const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
+        body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
+      } else {
+        subject = `Regarding opportunities at ${selectedCompany?.name}`;
+        body = generatedEmail;
+      }
+    }
+
+    // Ensure we have content
+    if (!subject.trim()) {
+      subject = `Regarding opportunities at ${selectedCompany?.name}`;
+    }
+    if (!body.trim()) {
+      body = `Hello,\n\nI would like to connect with you.\n\nBest regards`;
+    }
+
+    console.log("📧 Creating Gmail link with:", {
+      subject,
+      body: body.substring(0, 50) + "...",
+    });
+
+    // Gmail compose URL format
+    const encodedTo = encodeURIComponent(guessedEmail);
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodedTo}&su=${encodedSubject}&body=${encodedBody}`;
+    console.log("📧 Final Gmail link:", gmailLink);
+
+    return gmailLink;
+  };
+
+  const handleSendGmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const gmailLink = createGmailComposeLink();
+
+    if (gmailLink === "#") {
+      alert("Please generate both an email address and email content first.");
+      return;
+    }
+
+    console.log("📧 Opening Gmail compose:", gmailLink);
+
+    try {
+      // Open Gmail in a new tab
+      window.open(gmailLink, "_blank");
+    } catch (error) {
+      console.error("❌ Error opening Gmail:", error);
+      alert("Could not open Gmail. Please make sure you're logged into Gmail and try again.");
+    }
+  };
+
+  const createOutlookComposeLink = () => {
+    if (!guessedEmail) return "#";
+
+    let subject = "";
+    let body = "";
+
+    // Same parsing logic as Gmail
+    if (!subject || !body) {
+      if (generatedEmail.startsWith("Subject:")) {
+        const lines = generatedEmail.split("\n");
+        subject = lines[0].replace("Subject:", "").trim();
+        const bodyStartIndex = lines.findIndex((line, index) => index > 0 && line.trim() !== "");
+        body = bodyStartIndex >= 0 ? lines.slice(bodyStartIndex).join("\n").trim() : "";
+      } else {
+        subject = `Regarding opportunities at ${selectedCompany?.name}`;
+        body = generatedEmail;
+      }
+    }
+
+    if (!subject.trim()) {
+      subject = `Regarding opportunities at ${selectedCompany?.name}`;
+    }
+    if (!body.trim()) {
+      body = `Hello,\n\nI would like to connect with you.\n\nBest regards`;
+    }
+
+    // Correct Outlook.com compose URL format
+    const encodedTo = encodeURIComponent(guessedEmail);
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(body);
+
+    return `https://outlook.office.com/mail/deeplink/compose?to=${encodedTo}&subject=${encodedSubject}&body=${encodedBody}`;
+  };
+
+  const handleSendOutlook = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const outlookLink = createOutlookComposeLink();
+
+    if (outlookLink === "#") {
+      alert("Please generate both an email address and email content first.");
+      return;
+    }
+
+    try {
+      window.open(outlookLink, "_blank");
+    } catch (error) {
+      console.error("❌ Error opening Outlook:", error);
+      alert(
+        "Could not open Outlook. Please make sure you're logged into Outlook.com and try again."
+      );
     }
   };
 
@@ -663,8 +791,6 @@ export default function EmailsPage() {
       }
 
       // Reset local email state
-      setEmailSubject("");
-      setEmailBody("");
       setGuessedEmail("");
       setConfidence(0);
       setCreditError("");
@@ -935,11 +1061,31 @@ export default function EmailsPage() {
                   </>
                 )}
               </Button>
+
+              {/* Enhanced Email Sending Options */}
               {guessedEmail && (
-                <Button onClick={handleSendEmail}>
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Email
-                </Button>
+                <>
+                  <Button
+                    onClick={handleSendGmail}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send with Gmail
+                  </Button>
+
+                  <Button
+                    onClick={handleSendOutlook}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send with Outlook
+                  </Button>
+
+                  <Button onClick={handleSendEmail} variant="outline">
+                    <Send className="h-4 w-4 mr-2" />
+                    Default Email App
+                  </Button>
+                </>
               )}
             </div>
           </div>

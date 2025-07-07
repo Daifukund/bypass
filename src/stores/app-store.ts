@@ -1,19 +1,19 @@
 // src/stores/app-store.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { CreditService } from '@/lib/credits';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { CreditService } from "@/lib/credits";
 
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   // Clear storage if we detect a version mismatch or corruption
-  const storageVersion = localStorage.getItem('bypass-storage-version');
-  const currentVersion = '1.0.0'; // Update this when you make breaking changes
-  
+  const storageVersion = localStorage.getItem("bypass-storage-version");
+  const currentVersion = "1.0.0"; // Update this when you make breaking changes
+
   if (storageVersion !== currentVersion) {
-    console.log('Clearing storage due to version change');
-    localStorage.removeItem('bypass-app-storage');
-    localStorage.removeItem('bypass-search-storage');
-    localStorage.setItem('bypass-storage-version', currentVersion);
+    console.log("Clearing storage due to version change");
+    localStorage.removeItem("bypass-app-storage");
+    localStorage.removeItem("bypass-search-storage");
+    localStorage.setItem("bypass-storage-version", currentVersion);
   }
 }
 
@@ -28,7 +28,9 @@ export interface UserProfile {
   phone?: string;
   linkedin?: string;
   language?: string;
-  plan?: 'freemium' | 'premium';
+  bio_text?: string;
+  personal_website?: string;
+  plan?: "freemium" | "premium";
   email_credits?: number;
   created_at?: string;
   updated_at?: string;
@@ -60,7 +62,7 @@ type AppState = {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearUser: () => void;
-  
+
   // Credit actions
   incrementCredits: () => void;
   refreshProfile: (supabase: SupabaseClient) => Promise<void>;
@@ -104,28 +106,28 @@ export const useAppStore = create<AppState>()(
 
       setProfile: (profile) => {
         const emailCreditsUsed = profile?.email_credits || 0;
-        const isPremium = profile?.plan === 'premium';
+        const isPremium = profile?.plan === "premium";
         const creditsRemaining = Math.max(0, get().maxFreeCredits - emailCreditsUsed);
 
-        set({ 
+        set({
           profile,
           emailCreditsUsed,
           isPremium,
-          creditsRemaining
+          creditsRemaining,
         });
 
         // Enhanced onboarding logic
         const isFirstTime = get().checkIfFirstTimeUser(profile);
         const hasCompletedOnboarding = get().hasCompletedOnboarding;
-        
-        console.log('🎯 Onboarding check:', { 
-          isFirstTime, 
-          hasCompletedOnboarding, 
-          createdAt: profile?.created_at 
+
+        console.log("🎯 Onboarding check:", {
+          isFirstTime,
+          hasCompletedOnboarding,
+          createdAt: profile?.created_at,
         });
-        
+
         if (isFirstTime && !hasCompletedOnboarding) {
-          console.log('✅ Showing welcome modal for new user');
+          console.log("✅ Showing welcome modal for new user");
           set({ showWelcomeModal: true });
         }
       },
@@ -133,17 +135,18 @@ export const useAppStore = create<AppState>()(
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
 
-      clearUser: () => set({ 
-        user: null, 
-        profile: null, 
-        emailCreditsUsed: 0, 
-        isPremium: false, 
-        creditsRemaining: 5,
-        loading: false,
-        error: null,
-        showWelcomeModal: false,
-        hasCompletedOnboarding: false
-      }),
+      clearUser: () =>
+        set({
+          user: null,
+          profile: null,
+          emailCreditsUsed: 0,
+          isPremium: false,
+          creditsRemaining: 5,
+          loading: false,
+          error: null,
+          showWelcomeModal: false,
+          hasCompletedOnboarding: false,
+        }),
 
       // Credit management
       incrementCredits: () => {
@@ -151,10 +154,10 @@ export const useAppStore = create<AppState>()(
         if (!state.isPremium) {
           const newCreditsUsed = state.emailCreditsUsed + 1;
           const newCreditsRemaining = Math.max(0, state.maxFreeCredits - newCreditsUsed);
-          
+
           set({
             emailCreditsUsed: newCreditsUsed,
-            creditsRemaining: newCreditsRemaining
+            creditsRemaining: newCreditsRemaining,
           });
 
           // Also update the profile if it exists
@@ -162,8 +165,8 @@ export const useAppStore = create<AppState>()(
             set({
               profile: {
                 ...state.profile,
-                email_credits: newCreditsUsed
-              }
+                email_credits: newCreditsUsed,
+              },
             });
           }
         }
@@ -178,20 +181,20 @@ export const useAppStore = create<AppState>()(
           set({ loading: true, error: null });
 
           const { data: profileData, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', state.user.id)
+            .from("users")
+            .select("*")
+            .eq("id", state.user.id)
             .single();
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching profile:', profileError);
-            set({ error: 'Failed to fetch profile' });
+          if (profileError && profileError.code !== "PGRST116") {
+            console.error("Error fetching profile:", profileError);
+            set({ error: "Failed to fetch profile" });
           } else if (profileData) {
             get().setProfile(profileData);
           }
         } catch (error) {
-          console.error('Error refreshing profile:', error);
-          set({ error: 'Failed to refresh profile' });
+          console.error("Error refreshing profile:", error);
+          set({ error: "Failed to refresh profile" });
         } finally {
           set({ loading: false });
         }
@@ -202,34 +205,36 @@ export const useAppStore = create<AppState>()(
         try {
           set({ loading: true, error: null });
 
-          const { data: { user }, error: authError } = await supabase.auth.getUser();
-          
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser();
+
           if (authError || !user) {
             get().clearUser();
             return;
           }
 
-          set({ user: { id: user.id, email: user.email || '' } });
+          set({ user: { id: user.id, email: user.email || "" } });
 
           // Try to fetch profile, but don't fail if it doesn't work
           try {
             const { data: profileData, error: profileError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', user.id)
+              .from("users")
+              .select("*")
+              .eq("id", user.id)
               .single();
 
             if (!profileError && profileData) {
               get().setProfile(profileData);
             }
           } catch (profileError) {
-            console.warn('Profile fetch failed:', profileError);
+            console.warn("Profile fetch failed:", profileError);
             // Continue without profile
           }
-          
         } catch (error) {
-          console.error('Error initializing user:', error);
-          set({ error: 'Failed to initialize user' });
+          console.error("Error initializing user:", error);
+          set({ error: "Failed to initialize user" });
         } finally {
           set({ loading: false });
         }
@@ -239,16 +244,16 @@ export const useAppStore = create<AppState>()(
       refreshCredits: async (supabase: SupabaseClient) => {
         const user = get().user;
         if (!user) return;
-        
+
         try {
           const creditStatus = await CreditService.getCreditStatus(user.id, supabase);
           set({
             emailCreditsUsed: creditStatus.creditsUsed,
             creditsRemaining: creditStatus.creditsRemaining,
-            isPremium: creditStatus.plan === 'premium'
+            isPremium: creditStatus.plan === "premium",
           });
         } catch (error) {
-          console.error('Error refreshing credits:', error);
+          console.error("Error refreshing credits:", error);
         }
       },
 
@@ -257,21 +262,21 @@ export const useAppStore = create<AppState>()(
       setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }),
       checkIfFirstTimeUser: (profile) => {
         if (!profile?.created_at) {
-          console.log('❌ No created_at found in profile');
+          console.log("❌ No created_at found in profile");
           return false;
         }
-        
+
         const createdAt = new Date(profile.created_at);
         const now = new Date();
         const timeDiff = now.getTime() - createdAt.getTime();
         const hoursDiff = timeDiff / (1000 * 3600);
-        
-        console.log('⏰ Time check:', { 
-          createdAt: createdAt.toISOString(), 
-          now: now.toISOString(), 
-          hoursDiff: hoursDiff.toFixed(2) 
+
+        console.log("⏰ Time check:", {
+          createdAt: createdAt.toISOString(),
+          now: now.toISOString(),
+          hoursDiff: hoursDiff.toFixed(2),
         });
-        
+
         // Consider users created within the last 24 hours as first-time users
         return hoursDiff <= 24;
       },
@@ -283,20 +288,20 @@ export const useAppStore = create<AppState>()(
 
         try {
           const { data: userData, error } = await supabase
-            .from('users')
-            .select('email_credits, plan')
-            .eq('id', state.user.id)
+            .from("users")
+            .select("email_credits, plan")
+            .eq("id", state.user.id)
             .single();
 
           if (!error && userData) {
             const emailCreditsUsed = userData.email_credits || 0;
-            const isPremium = userData.plan === 'premium';
+            const isPremium = userData.plan === "premium";
             const creditsRemaining = Math.max(0, state.maxFreeCredits - emailCreditsUsed);
-            
+
             set({
               emailCreditsUsed,
               isPremium,
-              creditsRemaining
+              creditsRemaining,
             });
 
             // Also update profile if it exists
@@ -305,18 +310,18 @@ export const useAppStore = create<AppState>()(
                 profile: {
                   ...state.profile,
                   email_credits: emailCreditsUsed,
-                  plan: userData.plan
-                }
+                  plan: userData.plan,
+                },
               });
             }
           }
         } catch (error) {
-          console.error('Error refreshing credits:', error);
+          console.error("Error refreshing credits:", error);
         }
       },
     }),
     {
-      name: 'bypass-app-storage',
+      name: "bypass-app-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
@@ -327,9 +332,9 @@ export const useAppStore = create<AppState>()(
       // Add error handling for corrupted storage
       onRehydrateStorage: () => (state, error) => {
         if (error) {
-          console.warn('Failed to rehydrate app store:', error);
+          console.warn("Failed to rehydrate app store:", error);
           // Clear corrupted storage
-          localStorage.removeItem('bypass-app-storage');
+          localStorage.removeItem("bypass-app-storage");
         }
       },
     }

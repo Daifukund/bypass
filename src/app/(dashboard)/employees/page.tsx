@@ -217,6 +217,7 @@ export default function EmployeesPage() {
           content: linkedinContent,
           companyName: selectedCompany?.name,
           location: criteria?.location,
+          jobTitle: criteria?.jobTitle, // Add job title for relevance scoring
         }),
       });
 
@@ -232,8 +233,8 @@ export default function EmployeesPage() {
         // Transform API response to match frontend format
         const transformedEmployees = result.employees.map((emp: any) => ({
           id: emp.id,
-          fullName: emp.name, // Map 'name' to 'fullName'
-          jobTitle: emp.title, // Map 'title' to 'jobTitle'
+          fullName: emp.name,
+          jobTitle: emp.title,
           location: emp.location,
           linkedinUrl: emp.linkedinUrl,
           relevanceScore: emp.relevanceScore,
@@ -245,17 +246,31 @@ export default function EmployeesPage() {
         const currentEmployees = useSearchStore.getState().employees;
         setEmployees([...currentEmployees, ...transformedEmployees]);
 
-        // Show success message
+        // Show enhanced success message with quality metrics
+        const qualityInfo = result.quality || {};
+        const processingInfo = result.processing || {};
+
         console.log(`✅ Successfully extracted ${result.employees.length} employees!`);
 
-        setExtractionMessage(`✅ Successfully extracted ${result.employees.length} employees!`);
+        setExtractionMessage(
+          `✅ Successfully extracted ${result.employees.length} new employees! ` +
+            `Quality: ${qualityInfo.perfectContacts || 0} perfect matches, ${qualityInfo.goodContacts || 0} good contacts. ` +
+            `${processingInfo.duplicatesSkipped > 0 ? `Skipped ${processingInfo.duplicatesSkipped} duplicates.` : ""}`
+        );
         setLinkedinContent("");
 
-        // Auto-hide message after 3 seconds
-        setTimeout(() => setExtractionMessage(""), 3000);
+        // 🚀 IMPROVEMENT: Scroll to top to show extracted employees
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+
+        // Auto-hide message after 5 seconds (longer to read quality info)
+        setTimeout(() => setExtractionMessage(""), 5000);
       } else {
         setExtractionError(
-          "No employees found in the pasted content. Please make sure you copied the LinkedIn people search results correctly."
+          result.message ||
+            "No employees found in the pasted content. Please make sure you copied the LinkedIn people search results correctly."
         );
       }
     } catch (error) {

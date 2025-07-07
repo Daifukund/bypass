@@ -2,11 +2,49 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, TrendingUp, Mail, Clock } from "lucide-react";
+import posthog from "posthog-js";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    posthog.capture("landing_page_viewed");
+  }, []);
+
+  const handleCtaClick = (ctaType: string, location: string) => {
+    posthog.capture("cta_clicked", {
+      cta_type: ctaType,
+      cta_location: location,
+      user_type: "anonymous",
+    });
+  };
+
+  const handleDemoClick = () => {
+    posthog.capture("demo_requested", {
+      source: "hero_section",
+    });
+  };
+
+  const handleNavClick = (navItem: string) => {
+    posthog.capture("navigation_clicked", {
+      nav_item: navItem,
+      device: window.innerWidth < 768 ? "mobile" : "desktop",
+    });
+  };
+
+  const handleSectionScroll = (sectionName: string) => {
+    posthog.capture("section_viewed", {
+      section: sectionName,
+    });
+  };
+
+  const handleSignupClick = (location: string) => {
+    posthog.capture("signup_clicked", {
+      button_location: location,
+    });
+  };
 
   return (
     <div className="bg-white text-gray-900">
@@ -18,22 +56,38 @@ export default function LandingPage() {
           {/* Desktop Navigation */}
           <ul className="hidden md:flex gap-6 text-sm font-medium">
             <li>
-              <Link href="#how" className="hover:text-gray-600 transition-colors">
+              <Link
+                href="#how"
+                onClick={() => handleNavClick("how_it_works")}
+                className="hover:text-gray-600 transition-colors"
+              >
                 How it Works
               </Link>
             </li>
             <li>
-              <Link href="#pricing" className="hover:text-gray-600 transition-colors">
+              <Link
+                href="#pricing"
+                onClick={() => handleNavClick("pricing")}
+                className="hover:text-gray-600 transition-colors"
+              >
                 Pricing
               </Link>
             </li>
             <li>
-              <Link href="/login" className="hover:text-gray-600 transition-colors">
+              <Link
+                href="/login"
+                onClick={() => handleNavClick("login")}
+                className="hover:text-gray-600 transition-colors"
+              >
                 Login
               </Link>
             </li>
             <li>
-              <Link href="/signup" className="hover:text-gray-600 transition-colors">
+              <Link
+                href="/signup"
+                onClick={() => handleNavClick("signup_nav")}
+                className="hover:text-gray-600 transition-colors"
+              >
                 Sign Up
               </Link>
             </li>
@@ -42,6 +96,7 @@ export default function LandingPage() {
           {/* Desktop CTA */}
           <Link
             href="/signup"
+            onClick={() => handleSignupClick("navbar")}
             className="hidden md:block bg-black text-white px-4 py-2 rounded-xl text-sm hover:bg-gray-800 transition-colors"
           >
             Start Free Trial
@@ -49,7 +104,12 @@ export default function LandingPage() {
 
           {/* Mobile Menu Button */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => {
+              setMobileMenuOpen(!mobileMenuOpen);
+              posthog.capture("mobile_menu_toggled", {
+                action: !mobileMenuOpen ? "opened" : "closed",
+              });
+            }}
             className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Toggle menu"
           >
@@ -64,7 +124,10 @@ export default function LandingPage() {
               <li>
                 <Link
                   href="#how"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick("how_it_works_mobile");
+                  }}
                   className="block py-2 hover:text-gray-600 transition-colors"
                 >
                   How it Works
@@ -73,7 +136,10 @@ export default function LandingPage() {
               <li>
                 <Link
                   href="#pricing"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick("pricing_mobile");
+                  }}
                   className="block py-2 hover:text-gray-600 transition-colors"
                 >
                   Pricing
@@ -82,7 +148,10 @@ export default function LandingPage() {
               <li>
                 <Link
                   href="/login"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick("login_mobile");
+                  }}
                   className="block py-2 hover:text-gray-600 transition-colors"
                 >
                   Login
@@ -91,7 +160,10 @@ export default function LandingPage() {
               <li>
                 <Link
                   href="/signup"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleNavClick("signup_nav_mobile");
+                  }}
                   className="block py-2 hover:text-gray-600 transition-colors"
                 >
                   Sign Up
@@ -100,7 +172,10 @@ export default function LandingPage() {
             </ul>
             <Link
               href="/signup"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleSignupClick("mobile_menu");
+              }}
               className="block mt-4 bg-black text-white px-4 py-3 rounded-xl text-sm text-center hover:bg-gray-800 transition-colors"
             >
               Start Free Trial
@@ -120,12 +195,14 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-4 px-2">
           <Link
             href="/signup"
+            onClick={() => handleSignupClick("hero")}
             className="bg-black text-white px-4 sm:px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center text-sm sm:text-base"
           >
             Get Started – No Credit Card Required
           </Link>
           <Link
             href="#demo"
+            onClick={handleDemoClick}
             className="text-gray-600 hover:text-gray-800 py-3 underline underline-offset-4 min-h-[44px] flex items-center justify-center transition-colors text-sm sm:text-base"
           >
             See Demo

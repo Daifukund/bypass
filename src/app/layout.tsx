@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SupabaseProvider } from "@/components/supabase-provider"; // ✅ Named import
+import { SupabaseProvider } from "@/components/supabase-provider";
+import { PostHogProvider } from "@/components/posthog-provider";
 import "./globals.css";
 import { Home, Search, Mail } from "lucide-react";
 
@@ -39,7 +40,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
       >
-        <SupabaseProvider>{children}</SupabaseProvider>
+        <PostHogProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

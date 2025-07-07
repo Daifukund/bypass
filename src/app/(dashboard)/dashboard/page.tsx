@@ -128,18 +128,33 @@ export default function DashboardPage() {
   const getProfileCompletionPercentage = () => {
     if (!profile) return 0;
 
-    const fields = [
+    // 🆕 NEW: Core fields that count towards 100% completion
+    const coreFields = [
       profile.first_name,
       profile.last_name,
       profile.university,
       profile.study_level,
       profile.field_of_study,
-      profile.phone,
-      profile.linkedin,
     ];
 
-    const completedFields = fields.filter((field) => field && field.trim() !== "").length;
-    return Math.round((completedFields / fields.length) * 100);
+    const completedCoreFields = coreFields.filter((field) => field && field.trim() !== "").length;
+    return Math.round((completedCoreFields / coreFields.length) * 100);
+  };
+
+  // 🆕 NEW: Calculate bonus completion percentage
+  const getBonusCompletionPercentage = () => {
+    if (!profile) return 0;
+
+    const bonusFields = [
+      profile.phone,
+      profile.linkedin,
+      profile.language,
+      profile.personal_website,
+      profile.bio_text,
+    ];
+
+    const completedBonusFields = bonusFields.filter((field) => field && field.trim() !== "").length;
+    return Math.round((completedBonusFields / bonusFields.length) * 100);
   };
 
   const handleWelcomeModalClose = () => {

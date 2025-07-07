@@ -7,6 +7,7 @@ import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   User,
   CreditCard,
@@ -20,6 +21,7 @@ import {
   Linkedin,
   Zap,
   ArrowLeft,
+  AlertCircle,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -52,6 +54,7 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -61,6 +64,8 @@ export default function ProfilePage() {
     phone: "",
     linkedin: "",
     language: "English",
+    bio_text: "",
+    personal_website: "",
   });
 
   // Use store user if available, otherwise use local user
@@ -177,6 +182,8 @@ export default function ProfilePage() {
         phone: profile.phone || "",
         linkedin: profile.linkedin || "",
         language: profile.language || "English",
+        bio_text: profile.bio_text || "",
+        personal_website: profile.personal_website || "",
       };
       setFormData(newFormData);
     }
@@ -248,6 +255,8 @@ export default function ProfilePage() {
         phone: profile.phone || "",
         linkedin: profile.linkedin || "",
         language: profile.language || "English",
+        bio_text: profile.bio_text || "",
+        personal_website: profile.personal_website || "",
       });
     }
     setIsEditing(false);
@@ -362,9 +371,13 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Form */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Core Information Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Core Information</h3>
+                <p className="text-sm text-gray-600">Required for 100% profile completion</p>
+              </div>
               {!isEditing ? (
                 <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                   Edit Profile
@@ -383,7 +396,7 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="first_name">First Name</Label>
+                <Label htmlFor="first_name">First Name *</Label>
                 <Input
                   id="first_name"
                   value={formData.first_name}
@@ -399,7 +412,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <Label htmlFor="last_name">Last Name</Label>
+                <Label htmlFor="last_name">Last Name *</Label>
                 <Input
                   id="last_name"
                   value={formData.last_name}
@@ -415,7 +428,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <Label htmlFor="university">University/School</Label>
+                <Label htmlFor="university">University/School *</Label>
                 <Input
                   id="university"
                   value={formData.university}
@@ -431,7 +444,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <Label htmlFor="study_level">Study Level</Label>
+                <Label htmlFor="study_level">Study Level *</Label>
                 <Input
                   id="study_level"
                   value={formData.study_level}
@@ -447,8 +460,8 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="field_of_study">Field of Study</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="field_of_study">Field of Study *</Label>
                 <Input
                   id="field_of_study"
                   value={formData.field_of_study}
@@ -463,7 +476,19 @@ export default function ProfilePage() {
                   className="mt-1"
                 />
               </div>
+            </div>
+          </div>
 
+          {/* Additional Information Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Additional Information</h3>
+              <p className="text-sm text-gray-600">
+                Boost your profile with these optional details
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="phone">Phone</Label>
                 <Input
@@ -493,6 +518,20 @@ export default function ProfilePage() {
               </div>
 
               <div>
+                <Label htmlFor="personal_website">Personal Website</Label>
+                <Input
+                  id="personal_website"
+                  value={formData.personal_website}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, personal_website: e.target.value }))
+                  }
+                  disabled={!isEditing}
+                  placeholder="https://yourwebsite.com"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="language">Language</Label>
                 <Input
                   id="language"
@@ -506,6 +545,23 @@ export default function ProfilePage() {
                   disabled={!isEditing}
                   className="mt-1"
                 />
+              </div>
+
+              {/* Bio - full width */}
+              <div className="md:col-span-2">
+                <Label htmlFor="bio_text">Bio</Label>
+                <Textarea
+                  id="bio_text"
+                  value={formData.bio_text}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, bio_text: e.target.value }))}
+                  disabled={!isEditing}
+                  placeholder="Tell us a bit about yourself, your goals, and what makes you unique..."
+                  className="mt-1"
+                  rows={4}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.bio_text?.length || 0}/500 characters
+                </p>
               </div>
             </div>
           </div>
@@ -637,16 +693,20 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
             <div className="space-y-3">
               {!currentIsPremium && (
-                <Button className="w-full" onClick={() => router.push("/upgrade")}>
+                <Button
+                  onClick={() => router.push("/upgrade")}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                >
                   <Crown className="h-4 w-4 mr-2" />
                   Upgrade to Premium
                 </Button>
               )}
 
               <Button
-                variant="destructive"
-                className="w-full"
                 onClick={() => setShowDeleteConfirm(true)}
+                variant="outline"
+                size="sm"
+                className="w-full text-red-600 border-red-200 hover:bg-red-50"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
@@ -659,21 +719,31 @@ export default function ProfilePage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Account</h3>
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="bg-red-100 p-2 rounded-full">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
+            </div>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete your account? This action cannot be undone.
             </p>
             <div className="flex space-x-3">
-              <Button variant="destructive" onClick={handleDeleteAccount} className="flex-1">
-                Delete Account
-              </Button>
               <Button
-                variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
+                variant="outline"
+                size="sm"
                 className="flex-1"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteAccount}
+                size="sm"
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                Delete
               </Button>
             </div>
           </div>

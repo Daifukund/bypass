@@ -8,15 +8,11 @@ import OpenAI from "openai";
 // Validate API key at startup (but allow development without it)
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey && process.env.NODE_ENV === "production") {
-  throw new Error(
-    "OPENAI_API_KEY environment variable is required in production",
-  );
+  throw new Error("OPENAI_API_KEY environment variable is required in production");
 }
 
 if (!apiKey && process.env.NODE_ENV !== "production") {
-  console.warn(
-    "⚠️ OPENAI_API_KEY not found. OpenAI features will be disabled in development.",
-  );
+  console.warn("⚠️ OPENAI_API_KEY not found. OpenAI features will be disabled in development.");
 }
 
 /**
@@ -93,7 +89,7 @@ export const DEFAULT_CONFIGS = {
 
 /**
  * Helper function to create user location object for web search
- * Parses location string and returns formatted location object
+ * Parses location string and returns formatted location object with ISO country codes
  */
 export const createUserLocation = (location?: string) => {
   if (!location) {
@@ -110,12 +106,73 @@ export const createUserLocation = (location?: string) => {
 
   if (parts.length >= 2) {
     const city = parts[0];
-    const country = parts[parts.length - 1];
+    const countryName = parts[parts.length - 1];
     const region = parts.length > 2 ? parts[1] : city;
+
+    // Map common country names to ISO 3166-1 codes
+    const countryCodeMap: Record<string, string> = {
+      France: "FR",
+      "United States": "US",
+      USA: "US",
+      US: "US",
+      "United Kingdom": "GB",
+      UK: "GB",
+      Germany: "DE",
+      Spain: "ES",
+      Italy: "IT",
+      Netherlands: "NL",
+      Belgium: "BE",
+      Switzerland: "CH",
+      Canada: "CA",
+      Australia: "AU",
+      Japan: "JP",
+      China: "CN",
+      India: "IN",
+      Brazil: "BR",
+      Mexico: "MX",
+      Argentina: "AR",
+      Sweden: "SE",
+      Norway: "NO",
+      Denmark: "DK",
+      Finland: "FI",
+      Poland: "PL",
+      "Czech Republic": "CZ",
+      Austria: "AT",
+      Portugal: "PT",
+      Ireland: "IE",
+      Greece: "GR",
+      Turkey: "TR",
+      Russia: "RU",
+      "South Korea": "KR",
+      Singapore: "SG",
+      "Hong Kong": "HK",
+      Thailand: "TH",
+      Malaysia: "MY",
+      Indonesia: "ID",
+      Philippines: "PH",
+      Vietnam: "VN",
+      "South Africa": "ZA",
+      Egypt: "EG",
+      Israel: "IL",
+      UAE: "AE",
+      "Saudi Arabia": "SA",
+      Chile: "CL",
+      Colombia: "CO",
+      Peru: "PE",
+      Venezuela: "VE",
+      Ecuador: "EC",
+      Uruguay: "UY",
+      Paraguay: "PY",
+      Bolivia: "BO",
+      "New Zealand": "NZ",
+    };
+
+    // Get ISO country code or fallback to the original name if not found
+    const countryCode = countryCodeMap[countryName] || countryName;
 
     return {
       type: "approximate" as const,
-      country: country,
+      country: countryCode,
       city: city,
       region: region,
     };
@@ -135,7 +192,7 @@ export const createUserLocation = (location?: string) => {
  */
 export const createWebSearchTools = (
   location?: string,
-  contextSize: "low" | "medium" | "high" = "medium",
+  contextSize: "low" | "medium" | "high" = "medium"
 ) => {
   return [
     {
@@ -174,13 +231,10 @@ export const handleOpenAIError = (error: any, context: string): Error => {
 export const logOpenAIRequest = (
   operation: string,
   prompt: string,
-  additionalData?: Record<string, any>,
+  additionalData?: Record<string, any>
 ) => {
   console.log(`🚀 OpenAI Request - ${operation}`);
-  console.log(
-    "📝 Prompt:",
-    prompt.substring(0, 200) + (prompt.length > 200 ? "..." : ""),
-  );
+  console.log("📝 Prompt:", prompt.substring(0, 200) + (prompt.length > 200 ? "..." : ""));
 
   if (additionalData) {
     Object.entries(additionalData).forEach(([key, value]) => {
@@ -192,11 +246,7 @@ export const logOpenAIRequest = (
 /**
  * Logging helper for OpenAI responses
  */
-export const logOpenAIResponse = (
-  operation: string,
-  response: any,
-  extractedData?: any,
-) => {
+export const logOpenAIResponse = (operation: string, response: any, extractedData?: any) => {
   console.log(`📥 OpenAI Response - ${operation}`);
   console.log("📄 Full Response:", JSON.stringify(response, null, 2));
 
@@ -245,9 +295,7 @@ export class RateLimiter {
     const now = Date.now();
 
     // Remove old requests outside the time window
-    this.requests = this.requests.filter(
-      (time) => now - time < this.timeWindow,
-    );
+    this.requests = this.requests.filter((time) => now - time < this.timeWindow);
 
     if (this.requests.length >= this.maxRequests) {
       const oldestRequest = Math.min(...this.requests);
@@ -294,7 +342,7 @@ export const checkOpenAIHealth = async (): Promise<boolean> => {
 export const ensureOpenAIClient = (): OpenAI => {
   if (!openai) {
     throw new Error(
-      "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable.",
+      "OpenAI client not initialized. Please check your OPENAI_API_KEY environment variable."
     );
   }
   return openai;
@@ -305,7 +353,7 @@ export const ensureOpenAIClient = (): OpenAI => {
  * Returns null if client is not available instead of throwing
  */
 export const safeOpenAIOperation = async <T>(
-  operation: (client: OpenAI) => Promise<T>,
+  operation: (client: OpenAI) => Promise<T>
 ): Promise<T | null> => {
   if (!openai) {
     console.warn("⚠️ OpenAI operation skipped - client not initialized");
@@ -317,6 +365,19 @@ export const safeOpenAIOperation = async <T>(
   } catch (error) {
     console.error("❌ OpenAI operation failed:", error);
     throw error;
+  }
+};
+
+export const debugWebSearchSupport = (): void => {
+  console.log("🔍 Debug Web Search Support:");
+  console.log("- OpenAI client exists:", !!openai);
+  console.log("- OpenAI responses exists:", !!openai?.responses);
+  console.log("- OpenAI responses.create exists:", !!openai?.responses?.create);
+  console.log("- supportsWebSearch() returns:", supportsWebSearch());
+
+  if (openai?.responses) {
+    console.log("- responses object type:", typeof openai.responses);
+    console.log("- responses.create type:", typeof openai.responses.create);
   }
 };
 

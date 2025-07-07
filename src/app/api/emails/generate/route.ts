@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
     const { data: userProfile, error: profileError } = await supabase
       .from("users")
       .select(
-        "first_name, last_name, university, study_level, field_of_study, phone, linkedin, email_credits, plan"
+        "first_name, last_name, university, study_level, field_of_study, phone, linkedin, bio_text, personal_website, email_credits, plan"
       )
       .eq("id", user.id)
       .single();
@@ -297,6 +297,8 @@ export async function POST(req: NextRequest) {
           fieldOfStudy: userProfile.field_of_study,
           phone: userProfile.phone,
           linkedin: userProfile.linkedin,
+          bioText: userProfile.bio_text,
+          personalWebsite: userProfile.personal_website,
         }
       : undefined;
 
@@ -354,6 +356,10 @@ export async function POST(req: NextRequest) {
         studyLevel: mappedUserProfile?.studyLevel || "student",
         fieldOfStudy: mappedUserProfile?.fieldOfStudy || "Finance",
         university: mappedUserProfile?.university || "my university",
+        phone: mappedUserProfile?.phone || "",
+        linkedin: mappedUserProfile?.linkedin || "",
+        bioText: mappedUserProfile?.bioText || "",
+        personalWebsite: mappedUserProfile?.personalWebsite || "",
       });
 
       emailContent = {

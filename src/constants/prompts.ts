@@ -207,6 +207,8 @@ Return ONLY the JSON object, nothing else.`,
     const fieldOfStudy = userInfo?.fieldOfStudy || "[Field of Study]";
     const phone = userInfo?.phone || "";
     const linkedin = userInfo?.linkedin || "";
+    const bioText = userInfo?.bioText || "";
+    const personalWebsite = userInfo?.personalWebsite || "";
 
     // Language-specific content
     const getLanguageSpecificContent = (language: string) => {
@@ -257,6 +259,22 @@ Return ONLY the JSON object, nothing else.`,
 
     const langContent = getLanguageSpecificContent(params.language);
 
+    // 🆕 Enhanced bio context for personalization
+    const bioContext = bioText
+      ? `\n\nCONTEXT FROM SENDER'S BIO: "${bioText}"\nUse this to add a personal touch and show genuine interest, but keep it natural and concise.`
+      : "";
+
+    // 🆕 Enhanced signature with new fields
+    const buildSignature = () => {
+      let signature = `${langContent.closing},\n${senderName}`;
+
+      if (phone) signature += `\nPhone: ${phone}`;
+      if (linkedin) signature += `\nLinkedIn: ${linkedin}`;
+      if (personalWebsite) signature += `\nWebsite: ${personalWebsite}`;
+
+      return signature;
+    };
+
     return `You are a professional job search coach. Write a short and personalized email for the following context:
 
 - Sender: ${senderName}, a ${studyLevel} student in ${fieldOfStudy} at ${university}
@@ -269,20 +287,20 @@ SENDER INFORMATION TO USE:
 - Name: ${senderName}
 - University: ${university}
 - Study Level: ${studyLevel}
-- Field of Study: ${fieldOfStudy}${phone ? `\n- Phone: ${phone}` : ""}${linkedin ? `\n- LinkedIn: ${linkedin}` : ""}
+- Field of Study: ${fieldOfStudy}${phone ? `\n- Phone: ${phone}` : ""}${linkedin ? `\n- LinkedIn: ${linkedin}` : ""}${personalWebsite ? `\n- Website: ${personalWebsite}` : ""}${bioText ? `\n- Bio: ${bioText}` : ""}${bioContext}
 
 CRITICAL INSTRUCTIONS:
 1. WRITE THE ENTIRE EMAIL IN ${params.language.toUpperCase()} LANGUAGE
 2. Use the EXACT sender name "${senderName}" - do not use placeholders like [Your Name]
 3. Use the EXACT university "${university}" - do not use placeholders like [your university]
 4. Use the EXACT study level "${studyLevel}" - do not use placeholders
-5. Use the EXACT field of study "${fieldOfStudy}" - do not use placeholders
-6. Start with "Subject:" followed by the subject line IN ${params.language.toUpperCase()}
-7. Add one blank line after the subject
-8. Write the email body IN ${params.language.toUpperCase()}
-9. ${langContent.instructions}
-10. Keep it concise (100-150 words max for body)
-11. Include sender's signature with the EXACT name "${senderName}"
+5. Use the EXACT field of study "${fieldOfStudy}" - do not use placeholders${bioText ? `\n6. Use the bio information naturally to show genuine interest and personality` : ""}
+${bioText ? `7. Start with "Subject:" followed by the subject line IN ${params.language.toUpperCase()}` : `6. Start with "Subject:" followed by the subject line IN ${params.language.toUpperCase()}`}
+${bioText ? `8. Add one blank line after the subject` : `7. Add one blank line after the subject`}
+${bioText ? `9. Write the email body IN ${params.language.toUpperCase()}` : `8. Write the email body IN ${params.language.toUpperCase()}`}
+${bioText ? `10. ${langContent.instructions}` : `9. ${langContent.instructions}`}
+${bioText ? `11. Keep it concise (120-180 words max for body)` : `10. Keep it concise (100-150 words max for body)`}
+${bioText ? `12. Include sender's complete signature with contact details` : `11. Include sender's complete signature with contact details`}
 
 EXACT FORMAT TO FOLLOW:
 Subject: [Your subject line here in ${params.language}]
@@ -291,14 +309,13 @@ Subject: [Your subject line here in ${params.language}]
 
 [Email body content here in ${params.language}]
 
-${langContent.closing},
-${senderName}${phone ? `\nPhone: ${phone}` : ""}
+${buildSignature()}
 
 CRITICAL: 
 - Use REAL information, not placeholders
 - The entire email must be in ${params.language.toUpperCase()}
 - Use the exact sender name "${senderName}" everywhere
-- Do NOT use brackets like [Your Name] or [your field of study]
+- DO NOT use brackets like [Your Name] or [your field of study]${bioText ? `\n- Naturally incorporate bio information to show personality and genuine interest` : ""}${personalWebsite ? `\n- Include the website in the signature for professional credibility` : ""}
 
 Return ONLY the email in the exact format above.`;
   },
@@ -338,45 +355,57 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
   },
 
   /**
-   * LinkedIn Paste Analysis Prompt
+   * Enhanced LinkedIn Paste Analysis Prompt
    * Used for extracting employee data from pasted LinkedIn content
    */
   LINKEDIN_PASTE_ANALYSIS: (content: string, companyName: string): string => `
-You are a LinkedIn content analyzer. Extract ONLY real employees from pasted LinkedIn search results.
+You are an expert LinkedIn content analyzer. Extract ONLY real, complete employee profiles from the provided LinkedIn search results.
 
 Company: ${companyName}
 
 PASTED CONTENT:
 ${content}
 
-🎯 EXTRACTION RULES:
-1. Only extract profiles with COMPLETE first and last names
-2. Skip profiles with incomplete names (e.g., "John D.", "Sarah K.")
-3. Clean job titles - remove extra information after "|" or "•"
-4. Extract city/country from location fields
-5. Only include LinkedIn URLs if clearly visible
+🎯 ENHANCED EXTRACTION RULES:
+1. Extract ONLY profiles with COMPLETE first and last names (minimum 2 words)
+2. Skip ANY profiles with initials, abbreviations, or incomplete names
+3. Extract clean job titles - remove university info, credentials, and extra text after "|", "•", or "at"
+4. Parse location as "City, Country" format when possible
+5. Only include LinkedIn URLs if they are clearly visible profile links
+6. Focus on QUALITY over quantity - better to extract fewer high-quality profiles
 
-📝 COMMON LINKEDIN FORMATS TO RECOGNIZE:
+📝 LINKEDIN CONTENT PATTERNS TO RECOGNIZE:
 - "John Smith\nMarketing Manager\nParis, France\nConnect"
-- "Jane Doe • Senior Analyst at Company • London, UK"
-- "Mike Johnson | Product Manager | New York, NY"
+- "Jane Doe • Senior Data Analyst • London, UK • 2nd"
+- "Mike Johnson | Product Manager at TechCorp | New York, NY"
+- "Sarah Wilson\nSenior Software Engineer\nSan Francisco, CA\nView profile"
 
-✅ RETURN FORMAT - ONLY this JSON:
+🚫 PATTERNS TO IGNORE:
+- Names with initials only: "John D.", "J. Smith", "Sarah K."
+- UI elements: "Connect", "Follow", "Message", "View profile", "See more"
+- Connection indicators: "1st", "2nd", "3rd", "500+ connections"
+- Activity status: "Active 2 hours ago", "Recently active"
+- Generic text: "and 10 others", "Show more results"
+
+✅ REQUIRED JSON FORMAT:
 [
   {
-    "full_name": "Complete First Last Name Only",
+    "full_name": "Complete First Last Name",
     "job_title": "Clean Job Title Only", 
-    "location": "City, Country",
-    "linkedin_url": "URL if visible or empty string",
-    "relevance_score": "Good Contact"
+    "location": "City, Country or Region",
+    "linkedin_url": "https://linkedin.com/in/profile-url or empty string",
+    "relevance_score": "Perfect Contact"
   }
 ]
 
-🚫 STRICT RULES:
-- Skip incomplete names (initials only)
-- Return empty array [] if no valid employees found
-- No explanations, only JSON array
-- Clean job titles (remove university, credentials, multiple roles)
+🎯 QUALITY STANDARDS:
+- Each name must have at least 2 complete words (first + last name minimum)
+- Job titles should be professional roles, not educational info
+- Locations should be geographic (city/country), not company names
+- Return empty array [] if no valid profiles meet these standards
+- Maximum 20 profiles to ensure quality
+
+CRITICAL: Return ONLY the JSON array, no explanations or additional text.
 `,
 
   /**

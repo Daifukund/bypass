@@ -38,12 +38,7 @@ export type EmailFormat =
   | "flast"
   | "unknown";
 
-export type EmailTone =
-  | "Professional"
-  | "Casual"
-  | "Formal"
-  | "Friendly"
-  | "Direct";
+export type EmailTone = "Professional" | "Casual" | "Formal" | "Friendly" | "Direct";
 
 /**
  * OpenAI Web Search Response Structure
@@ -418,3 +413,15 @@ export const CONSTRAINTS = {
   MAX_EMAIL_BODY_LENGTH: 2000,
   MAX_SUBJECT_LENGTH: 100,
 } as const;
+
+export interface UserProfile {
+  firstName?: string;
+  lastName?: string;
+  university?: string;
+  studyLevel?: string;
+  fieldOfStudy?: string;
+  phone?: string;
+  linkedin?: string;
+  bioText?: string;
+  personalWebsite?: string;
+}
