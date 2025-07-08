@@ -359,53 +359,55 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
    * Used for extracting employee data from pasted LinkedIn content
    */
   LINKEDIN_PASTE_ANALYSIS: (content: string, companyName: string): string => `
-You are an expert LinkedIn content analyzer. Extract ONLY real, complete employee profiles from the provided LinkedIn search results.
+You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results.
 
 Company: ${companyName}
 
 PASTED CONTENT:
 ${content}
 
-🎯 ENHANCED EXTRACTION RULES:
-1. Extract ONLY profiles with COMPLETE first and last names (minimum 2 words)
-2. Skip ANY profiles with initials, abbreviations, or incomplete names
-3. Extract clean job titles - remove university info, credentials, and extra text after "|", "•", or "at"
-4. Parse location as "City, Country" format when possible
-5. Only include LinkedIn URLs if they are clearly visible profile links
-6. Focus on QUALITY over quantity - better to extract fewer high-quality profiles
+🎯 EXTRACTION INSTRUCTIONS:
+1. Look for patterns like:
+   - "FirstName LastName" followed by job title
+   - Job titles on separate lines after names
+   - Location information (city, country)
+   - Any LinkedIn profile URLs
 
-📝 LINKEDIN CONTENT PATTERNS TO RECOGNIZE:
-- "John Smith\nMarketing Manager\nParis, France\nConnect"
-- "Jane Doe • Senior Data Analyst • London, UK • 2nd"
-- "Mike Johnson | Product Manager at TechCorp | New York, NY"
-- "Sarah Wilson\nSenior Software Engineer\nSan Francisco, CA\nView profile"
+2. IGNORE these elements:
+   - Navigation text ("Skip to search", "notifications", etc.)
+   - UI buttons ("Connect", "Follow", "Message")
+   - Connection indicators ("1st", "2nd", "3rd")
+   - Activity status ("Active X hours ago")
 
-🚫 PATTERNS TO IGNORE:
-- Names with initials only: "John D.", "J. Smith", "Sarah K."
-- UI elements: "Connect", "Follow", "Message", "View profile", "See more"
-- Connection indicators: "1st", "2nd", "3rd", "500+ connections"
-- Activity status: "Active 2 hours ago", "Recently active"
-- Generic text: "and 10 others", "Show more results"
+3. EXTRACT even if incomplete:
+   - Names with initials are OK (e.g., "John D.")
+   - Basic job titles are OK (e.g., "Manager", "Analyst")
+   - Missing locations are OK
+
+📝 COMMON LINKEDIN PATTERNS:
+- "John Smith\nSenior Manager\nLondon, UK"
+- "Jane Doe • Marketing Director • Paris, France"
+- "Mike Johnson | Product Manager | New York"
+- "Sarah Wilson\nData Analyst\nRemote"
 
 ✅ REQUIRED JSON FORMAT:
 [
   {
-    "full_name": "Complete First Last Name",
-    "job_title": "Clean Job Title Only", 
-    "location": "City, Country or Region",
-    "linkedin_url": "https://linkedin.com/in/profile-url or empty string",
-    "relevance_score": "Perfect Contact"
+    "full_name": "John Smith",
+    "job_title": "Senior Manager", 
+    "location": "London, UK",
+    "linkedin_url": "",
+    "relevance_score": "Good Contact"
   }
 ]
 
-🎯 QUALITY STANDARDS:
-- Each name must have at least 2 complete words (first + last name minimum)
-- Job titles should be professional roles, not educational info
-- Locations should be geographic (city/country), not company names
-- Return empty array [] if no valid profiles meet these standards
-- Maximum 20 profiles to ensure quality
+🎯 IMPORTANT:
+- Extract ANY profile that looks like a real person with a job title
+- Don't be too strict - partial information is better than none
+- If you find NO profiles, return empty array []
+- Maximum 25 profiles
 
-CRITICAL: Return ONLY the JSON array, no explanations or additional text.
+Return ONLY the JSON array, no explanations.
 `,
 
   /**

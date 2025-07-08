@@ -206,6 +206,7 @@ export default function EmployeesPage() {
 
     try {
       console.log("🔍 Extracting employees from LinkedIn paste...");
+      console.log("📄 Content preview:", linkedinContent.substring(0, 200) + "...");
 
       // Call API to extract employees from LinkedIn paste
       const response = await fetch("/api/employees/extract-from-paste", {
@@ -217,7 +218,7 @@ export default function EmployeesPage() {
           content: linkedinContent,
           companyName: selectedCompany?.name,
           location: criteria?.location,
-          jobTitle: criteria?.jobTitle, // Add job title for relevance scoring
+          jobTitle: criteria?.jobTitle,
         }),
       });
 
@@ -226,6 +227,7 @@ export default function EmployeesPage() {
       console.log("📥 API Response:", result);
 
       if (!response.ok) {
+        console.error("❌ API Error:", result);
         throw new Error(result.message || "Failed to extract employees");
       }
 
@@ -268,14 +270,25 @@ export default function EmployeesPage() {
         // Auto-hide message after 5 seconds (longer to read quality info)
         setTimeout(() => setExtractionMessage(""), 5000);
       } else {
-        setExtractionError(
-          result.message ||
-            "No employees found in the pasted content. Please make sure you copied the LinkedIn people search results correctly."
-        );
+        // More specific error messages
+        if (result.total === 0) {
+          setExtractionError(
+            "No employees found in the pasted content. Make sure you:\n" +
+              "1. Copied the full LinkedIn people search page (not company page)\n" +
+              "2. The content includes employee names and job titles\n" +
+              "3. Try searching for a different role or use 'All filters' on LinkedIn"
+          );
+        } else {
+          setExtractionError(
+            result.message || "No valid employees found. Please check the pasted content format."
+          );
+        }
       }
     } catch (error) {
+      console.error("❌ Extraction error:", error);
       setExtractionError(
-        `Error: ${error instanceof Error ? error.message : "Something went wrong"}`
+        `Error: ${error instanceof Error ? error.message : "Something went wrong"}. ` +
+          "Please try again or make sure you copied valid LinkedIn search results."
       );
     } finally {
       setIsLoading(false);

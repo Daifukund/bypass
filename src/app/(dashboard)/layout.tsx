@@ -6,27 +6,15 @@ import Link from "next/link";
 import { useSupabase } from "@/components/supabase-provider";
 import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";
-import {
-  LogOut,
-  User,
-  CreditCard,
-  HelpCircle,
-  Home,
-  Search,
-  Mail,
-  Menu,
-  X,
-} from "lucide-react";
+import { LogOut, User, CreditCard, HelpCircle, Home, Search, Mail, Menu, X } from "lucide-react";
+import posthog from "posthog-js";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = useSupabase();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localLoading, setLocalLoading] = useState(true);
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
 
   // Use global store
   const {
@@ -42,7 +30,7 @@ export default function DashboardLayout({
     clearUser,
   } = useAppStore();
 
-  // ✅ ALWAYS call all hooks at the top level - no conditional hooks
+  // ✅ ALL HOOKS MUST BE AT THE TOP - NO CONDITIONAL HOOKS
 
   // Initialize user on mount - simplified approach
   useEffect(() => {
@@ -77,7 +65,15 @@ export default function DashboardLayout({
         setUser(basicUser);
         console.log("✅ Layout: Basic user set");
 
+        // 🆕 IDENTIFY USER IN POSTHOG
+        posthog.identify(session.user.id, {
+          email: session.user.email,
+          user_id: session.user.id,
+          first_seen: new Date().toISOString(),
+        });
+
         // Load profile in background (non-blocking)
+        let finalProfileData = null;
         try {
           const { data: profileData } = await supabase
             .from("users")
@@ -87,9 +83,9 @@ export default function DashboardLayout({
 
           if (profileData) {
             setProfile(profileData);
+            finalProfileData = profileData; // Store for PostHog
             console.log("✅ Layout: Profile loaded", {
               created_at: profileData.created_at,
-              hasCompletedOnboarding: profileData.hasCompletedOnboarding,
             });
           } else {
             console.log("⚠️ No profile found for user");
@@ -98,6 +94,19 @@ export default function DashboardLayout({
           console.warn("Profile loading failed, but continuing:", profileError);
           // Continue without profile - user can still use the app
         }
+
+        // 🆕 UPDATE POSTHOG USER PROPERTIES (moved here, after profile loading)
+        posthog.setPersonProperties({
+          plan: finalProfileData?.plan ?? "freemium",
+          email_credits_used: finalProfileData?.email_credits ?? 0,
+          university: finalProfileData?.university ?? null,
+          study_level: finalProfileData?.study_level ?? null,
+          field_of_study: finalProfileData?.field_of_study ?? null,
+          language: finalProfileData?.language ?? null,
+          created_at: finalProfileData?.created_at ?? null,
+          profile_completion: finalProfileData ? calculateProfileCompletion(finalProfileData) : 0,
+          has_profile: !!finalProfileData,
+        });
       } catch (error) {
         console.error("❌ Layout: Authentication check failed:", error);
         router.push("/login");
@@ -131,6 +140,17 @@ export default function DashboardLayout({
     return () => subscription.unsubscribe();
   }, [supabase, router, setUser, clearUser]);
 
+  // 🆕 TRACK DASHBOARD ENTRY - MOVED TO TOP WITH OTHER HOOKS
+  useEffect(() => {
+    if (user && !sessionStartTime) {
+      setSessionStartTime(Date.now());
+
+      posthog.capture("dashboard_entered", {
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [user, sessionStartTime]);
+
   // Debug info - always called
   useEffect(() => {
     console.log("🔍 Debug Info:", {
@@ -138,19 +158,28 @@ export default function DashboardLayout({
       profile: !!profile,
       storeLoading,
       localLoading,
-      supabaseUrl:
-        process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + "...",
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20) + "...",
       hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     });
   }, [user, profile, storeLoading, localLoading]);
 
-  // ✅ All hooks are called above this point
+  // ✅ ALL HOOKS ARE NOW CALLED ABOVE THIS POINT
 
   const handleSignOut = async () => {
     if (!supabase) return;
 
     try {
+      // 🆕 TRACK LOGOUT EVENT
+      posthog.capture("user_logged_out", {
+        session_duration: sessionStartTime ? Date.now() - sessionStartTime : 0,
+        timestamp: new Date().toISOString(),
+      });
+
       await supabase.auth.signOut();
+
+      // 🆕 RESET POSTHOG USER
+      posthog.reset();
+
       clearUser();
       router.push("/login");
     } catch (error) {
@@ -166,9 +195,7 @@ export default function DashboardLayout({
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
-          <p className="mt-2 text-xs text-gray-500">
-            Checking authentication...
-          </p>
+          <p className="mt-2 text-xs text-gray-500">Checking authentication...</p>
 
           <div className="mt-6">
             <button
@@ -281,11 +308,7 @@ export default function DashboardLayout({
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
               >
-                {mobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
@@ -372,10 +395,29 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          {children}
-        </div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">{children}</div>
       </main>
     </div>
   );
 }
+
+// Helper function stays the same
+const calculateProfileCompletion = (profileData: any) => {
+  if (!profileData) return 0;
+
+  const fields = [
+    "first_name",
+    "last_name",
+    "university",
+    "study_level",
+    "field_of_study",
+    "phone",
+    "linkedin",
+  ];
+  const completedFields = fields.filter((field) => {
+    const value = profileData[field];
+    return value && typeof value === "string" && value.trim().length > 0;
+  }).length;
+
+  return Math.round((completedFields / fields.length) * 100);
+};

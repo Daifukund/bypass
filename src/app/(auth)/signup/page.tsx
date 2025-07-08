@@ -76,7 +76,7 @@ function SignUpContent() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `https://bypass-eta.vercel.app/auth/callback`,
+          emailRedirectTo: `https://applywithbypass.vercel.app//auth/callback`,
         },
       });
 

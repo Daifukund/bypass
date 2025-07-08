@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SAAS Bypass",
-  description: "Your SAAS application",
+  title: "Bypass - Skip the Job Board Queue",
+  description:
+    "Stop getting ignored on job applications. Find hiring companies, connect with decision-makers, and get 3.2x more interview invitations.",
 };
 
 const navigation = [

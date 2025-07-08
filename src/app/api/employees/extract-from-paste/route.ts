@@ -39,26 +39,32 @@ async function createClient() {
 // 🚀 IMPROVEMENT 6: Enhanced content pre-processing
 function preprocessLinkedInContent(content: string): string {
   console.log("🧹 Pre-processing LinkedIn content...");
+  console.log("📄 Original content preview:", content.substring(0, 500));
 
-  // Remove common LinkedIn noise
+  // Don't remove too much - just clean up obvious noise
   let cleaned = content
-    // Remove "Connect" buttons and similar UI elements
-    .replace(/\b(Connect|Follow|Message|View profile)\b/gi, "")
-    // Remove degree indicators (1st, 2nd, 3rd connections)
-    .replace(/\b\d+(st|nd|rd|th)\s*\+?\s*(connection|degree)\b/gi, "")
-    // Remove "See more" and "Show less" text
-    .replace(/\b(See more|Show less|View full profile)\b/gi, "")
-    // Remove LinkedIn premium indicators
-    .replace(/\b(LinkedIn Premium|Premium)\b/gi, "")
+    // Remove LinkedIn navigation elements
+    .replace(/Skip to search|Skip to main content|Keyboard shortcuts|Close jump menu/gi, "")
+    .replace(/\d+ notifications total/gi, "")
+    .replace(/Search new feed updates notifications/gi, "")
+
+    // Remove common UI elements but keep structure
+    .replace(/\b(Connect|Follow|Message)\s*\n/gi, "\n")
+    .replace(/\b(View profile|View full profile)\s*\n/gi, "\n")
+
+    // Remove connection indicators but preserve names
+    .replace(/\b\d+(st|nd|rd|th)\s*\+?\s*connection\b/gi, "")
+    .replace(/\b\d+(st|nd|rd|th)\s*\+?\s*degree\b/gi, "")
+
     // Remove activity indicators
     .replace(/\b(Active \d+ hours? ago|Recently active)\b/gi, "")
-    // Remove mutual connections text
-    .replace(/\b\d+ mutual connections?\b/gi, "")
-    // Clean up extra whitespace and newlines
+
+    // Clean up whitespace but preserve line breaks (important for parsing)
     .replace(/\s+/g, " ")
-    .replace(/\n\s*\n/g, "\n")
+    .replace(/\s*\n\s*/g, "\n")
     .trim();
 
+  console.log("📄 Cleaned content preview:", cleaned.substring(0, 500));
   console.log("✅ Content pre-processing completed");
   return cleaned;
 }
@@ -70,11 +76,11 @@ function isValidEmployeeName(name: string): boolean {
   const trimmedName = name.trim();
 
   // Check minimum length
-  if (trimmedName.length < 3) return false;
+  if (trimmedName.length < 2) return false;
 
-  // Check for initials only (e.g., "J. D.", "John D.", "J.D.")
-  if (/^[A-Z]\.\s*[A-Z]\.?$/.test(trimmedName)) return false;
-  if (/^[A-Z][a-z]*\s+[A-Z]\.?$/.test(trimmedName)) return false;
+  // Allow single initials like "John D." - more permissive
+  if (/^[A-Z]\.\s*[A-Z]\.?$/.test(trimmedName)) return true; // Allow "J. D."
+  if (/^[A-Z][a-z]+\s+[A-Z]\.?$/.test(trimmedName)) return true; // Allow "John D."
 
   // Check for incomplete names with numbers or special chars
   if (/\d/.test(trimmedName)) return false;
@@ -82,7 +88,7 @@ function isValidEmployeeName(name: string): boolean {
 
   // Check for minimum word count (should have at least first + last name)
   const words = trimmedName.split(/\s+/).filter((word) => word.length > 0);
-  if (words.length < 2) return false;
+  if (words.length < 1) return false; // Changed from 2 to 1
 
   // Check for common non-name patterns
   const invalidPatterns = [
@@ -103,18 +109,16 @@ function normalizeJobTitle(title: string): string {
 
   let normalized = title.trim();
 
-  // Remove common separators and everything after them
-  normalized = normalized.split("|")[0].split("•")[0].split("at ")[0].trim();
+  // Remove common separators and everything after them - but keep more content
+  normalized = normalized.split("|")[0].split("•")[0].trim();
 
-  // Remove university/education info
+  // Don't split on "at " as it might be part of the job title
+  // Only remove university/education info if it's clearly education
   normalized = normalized.replace(/\b(at|@)\s+[A-Z][a-zA-Z\s&]+University\b/gi, "");
   normalized = normalized.replace(/\b(MBA|PhD|MS|BS|BA|Master|Bachelor).*$/gi, "");
 
-  // Remove credentials
+  // Remove credentials but be more selective
   normalized = normalized.replace(/\b(CPA|CFA|PMP|PhD|MD|JD|MBA|MS|BS|BA)\b/gi, "");
-
-  // Remove company mentions if they appear at the end
-  normalized = normalized.replace(/\s+(at|@|chez)\s+.+$/gi, "");
 
   // Clean up extra whitespace
   normalized = normalized.replace(/\s+/g, " ").trim();
@@ -272,10 +276,11 @@ function validateAndCleanEmployee(
     return null;
   }
 
-  // Clean and validate job title
+  // Clean and validate job title - be less strict
   const rawTitle = emp.job_title || emp.jobTitle || emp.title || "";
   const cleanTitle = normalizeJobTitle(rawTitle);
-  if (!cleanTitle || cleanTitle.length < 2) {
+  if (!cleanTitle || cleanTitle.length < 1) {
+    // Changed from 2 to 1
     console.log(`❌ Invalid job title: "${rawTitle}" -> "${cleanTitle}"`);
     return null;
   }
@@ -291,19 +296,12 @@ function validateAndCleanEmployee(
   // Calculate relevance score
   const relevanceScore = calculateRelevanceScore(cleanTitle, searchJobTitle);
 
-  // 🚀 IMPROVEMENT 5: Check for duplicates
+  // Check for duplicates - be more lenient
   const isDuplicate = allEmployees.slice(0, index).some((otherEmp) => {
     const otherName = otherEmp.full_name || otherEmp.fullName || otherEmp.name || "";
-    const otherTitle = normalizeJobTitle(
-      otherEmp.job_title || otherEmp.jobTitle || otherEmp.title || ""
-    );
 
-    // Consider duplicate if same name or very similar name + title
-    return (
-      name.toLowerCase() === otherName.toLowerCase() ||
-      (name.toLowerCase().includes(otherName.toLowerCase()) &&
-        cleanTitle.toLowerCase() === otherTitle.toLowerCase())
-    );
+    // Only consider exact name matches as duplicates
+    return name.toLowerCase() === otherName.toLowerCase();
   });
 
   if (isDuplicate) {
@@ -366,6 +364,32 @@ export async function POST(req: NextRequest) {
     // 🚀 IMPROVEMENT 6: Pre-process content
     const cleanedContent = preprocessLinkedInContent(body.content);
     console.log("📝 Content length after cleaning:", cleanedContent.length);
+
+    // Add better content analysis
+    const hasNames = /[A-Z][a-z]+ [A-Z][a-z]+/.test(cleanedContent);
+    const hasJobTitles =
+      /(Manager|Director|Analyst|Engineer|Specialist|Coordinator|Lead|Senior|Junior)/i.test(
+        cleanedContent
+      );
+    const hasLocations = /(London|Paris|New York|Remote|UK|France|USA)/i.test(cleanedContent);
+
+    console.log("📊 Content analysis:", {
+      hasNames,
+      hasJobTitles,
+      hasLocations,
+      contentPreview: cleanedContent.substring(0, 200),
+    });
+
+    if (!hasNames && !hasJobTitles) {
+      console.warn("⚠️ Content doesn't seem to contain employee profiles");
+      return NextResponse.json({
+        success: true,
+        employees: [],
+        total: 0,
+        message:
+          "The pasted content doesn't appear to contain employee profiles. Please make sure you copied from a LinkedIn People search page, not the main company page.",
+      });
+    }
 
     // Get job title from search criteria for relevance scoring
     const searchJobTitle = body.jobTitle || "";
@@ -446,7 +470,7 @@ export async function POST(req: NextRequest) {
           {
             role: "system",
             content:
-              "You are an expert LinkedIn content analyzer. Extract only real, complete employee profiles. Focus on quality over quantity. Return only valid JSON arrays with employee data.",
+              "You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results. Focus on quality over quantity. Return only valid JSON arrays with employee data.",
           },
           {
             role: "user",
@@ -463,11 +487,14 @@ export async function POST(req: NextRequest) {
       }
 
       console.log("📄 OpenAI Response:", content);
+      console.log("📊 Content length:", content.length);
+      console.log("📊 Content preview:", content.substring(0, 500) + "...");
 
       // Extract and validate employee data with enhanced processing
       const rawEmployees = extractAndParseJSON(content);
 
       console.log("🔍 Raw employees extracted:", rawEmployees?.length || 0);
+      console.log("🔍 Raw employees sample:", rawEmployees?.slice(0, 2));
 
       if (!Array.isArray(rawEmployees) || rawEmployees.length === 0) {
         return NextResponse.json({
