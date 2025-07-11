@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { OPENAI_PROMPTS } from "@/constants/prompts";
 import crypto from "crypto";
+import { Building, TrendingUp, Clock, MapPin, Linkedin } from "lucide-react";
 
 // Enhanced interface for type safety
 interface LinkedInEmployee {
@@ -17,6 +18,14 @@ interface LinkedInEmployee {
   linkedinUrl?: string;
   relevance_score?: string;
   relevanceScore?: string;
+  // ✅ Add new fields
+  department?: string;
+  seniority_level?: string;
+  seniorityLevel?: string;
+  years_at_company?: string;
+  yearsAtCompany?: string;
+  profile_image?: string;
+  profileImage?: string;
 }
 
 // Create server-side Supabase client
@@ -259,7 +268,119 @@ function extractAndParseJSON(text: string): LinkedInEmployee[] | null {
   return null;
 }
 
-// 🚀 IMPROVEMENT 5: Enhanced validation with duplicate detection
+// 🚀 NEW: Enhanced department inference
+function inferDepartment(jobTitle: string): string {
+  if (!jobTitle) return "Unknown";
+
+  const title = jobTitle.toLowerCase();
+
+  if (title.includes("marketing") || title.includes("brand") || title.includes("campaign")) {
+    return "Marketing";
+  } else if (
+    title.includes("engineer") ||
+    title.includes("developer") ||
+    title.includes("tech") ||
+    title.includes("software")
+  ) {
+    return "Engineering";
+  } else if (
+    title.includes("sales") ||
+    title.includes("account") ||
+    title.includes("business development")
+  ) {
+    return "Sales";
+  } else if (
+    title.includes("hr") ||
+    title.includes("human resources") ||
+    title.includes("people") ||
+    title.includes("talent")
+  ) {
+    return "Human Resources";
+  } else if (
+    title.includes("finance") ||
+    title.includes("accounting") ||
+    title.includes("controller")
+  ) {
+    return "Finance";
+  } else if (title.includes("product") || title.includes("pm")) {
+    return "Product";
+  } else if (title.includes("data") || title.includes("analytics") || title.includes("scientist")) {
+    return "Data & Analytics";
+  } else if (title.includes("design") || title.includes("ux") || title.includes("ui")) {
+    return "Design";
+  } else if (title.includes("operations") || title.includes("ops")) {
+    return "Operations";
+  } else if (title.includes("legal") || title.includes("counsel")) {
+    return "Legal";
+  }
+
+  return "Other";
+}
+
+// 🚀 NEW: Enhanced seniority level inference
+function inferSeniorityLevel(jobTitle: string): string {
+  if (!jobTitle) return "Unknown";
+
+  const title = jobTitle.toLowerCase();
+
+  // C-Level
+  if (
+    title.includes("ceo") ||
+    title.includes("cto") ||
+    title.includes("cfo") ||
+    title.includes("chief") ||
+    title.includes("founder")
+  ) {
+    return "C-Level";
+  }
+
+  // Executive
+  if (
+    title.includes("director") ||
+    title.includes("vp") ||
+    title.includes("vice president") ||
+    title.includes("head of") ||
+    title.includes("executive")
+  ) {
+    return "Executive";
+  }
+
+  // Senior
+  if (
+    title.includes("senior manager") ||
+    title.includes("principal") ||
+    title.includes("staff") ||
+    (title.includes("lead") && title.includes("senior"))
+  ) {
+    return "Senior";
+  }
+
+  // Mid-level
+  if (
+    title.includes("manager") ||
+    title.includes("senior") ||
+    title.includes("lead") ||
+    title.includes("specialist") ||
+    title.includes("coordinator")
+  ) {
+    return "Mid-level";
+  }
+
+  // Entry-level
+  if (
+    title.includes("intern") ||
+    title.includes("junior") ||
+    title.includes("associate") ||
+    title.includes("analyst") ||
+    title.includes("assistant")
+  ) {
+    return "Entry-level";
+  }
+
+  return "Unknown";
+}
+
+// 🚀 UPDATED: Enhanced validation with additional fields
 function validateAndCleanEmployee(
   emp: LinkedInEmployee,
   index: number,
@@ -276,11 +397,10 @@ function validateAndCleanEmployee(
     return null;
   }
 
-  // Clean and validate job title - be less strict
+  // Clean and validate job title
   const rawTitle = emp.job_title || emp.jobTitle || emp.title || "";
   const cleanTitle = normalizeJobTitle(rawTitle);
   if (!cleanTitle || cleanTitle.length < 1) {
-    // Changed from 2 to 1
     console.log(`❌ Invalid job title: "${rawTitle}" -> "${cleanTitle}"`);
     return null;
   }
@@ -293,14 +413,19 @@ function validateAndCleanEmployee(
   const linkedinUrl =
     emp.linkedin_url || emp.linkedinUrl || extractLinkedInUrl(originalContent, name);
 
+  // ✅ Extract or infer additional fields
+  const department = emp.department || inferDepartment(cleanTitle);
+  const seniorityLevel =
+    emp.seniority_level || emp.seniorityLevel || inferSeniorityLevel(cleanTitle);
+  const yearsAtCompany = emp.years_at_company || emp.yearsAtCompany || "";
+  const profileImage = emp.profile_image || emp.profileImage || "";
+
   // Calculate relevance score
   const relevanceScore = calculateRelevanceScore(cleanTitle, searchJobTitle);
 
-  // Check for duplicates - be more lenient
+  // Check for duplicates
   const isDuplicate = allEmployees.slice(0, index).some((otherEmp) => {
     const otherName = otherEmp.full_name || otherEmp.fullName || otherEmp.name || "";
-
-    // Only consider exact name matches as duplicates
     return name.toLowerCase() === otherName.toLowerCase();
   });
 
@@ -309,13 +434,17 @@ function validateAndCleanEmployee(
     return null;
   }
 
-  const cleanedEmployee = {
-    ...emp,
+  // ✅ FIX: Remove null assignments and use undefined or empty string instead
+  const cleanedEmployee: LinkedInEmployee = {
     full_name: name.trim(),
     job_title: cleanTitle,
     location: cleanLocation || "Not specified",
     linkedin_url: linkedinUrl,
     relevance_score: relevanceScore,
+    department: department,
+    seniority_level: seniorityLevel,
+    years_at_company: yearsAtCompany || undefined, // ✅ FIX: Use undefined instead of null
+    profile_image: profileImage || undefined, // ✅ FIX: Use undefined instead of null
   };
 
   console.log(`✅ Employee validated:`, cleanedEmployee);
@@ -470,7 +599,7 @@ export async function POST(req: NextRequest) {
           {
             role: "system",
             content:
-              "You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results. Focus on quality over quantity. Return only valid JSON arrays with employee data.",
+              "You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results with enhanced details. Focus on quality over quantity. Return only valid JSON arrays with employee data.",
           },
           {
             role: "user",
@@ -541,18 +670,38 @@ export async function POST(req: NextRequest) {
       }
 
       // Transform for database insertion
-      const employeesToInsert = newEmployees.map((emp: LinkedInEmployee) => ({
-        id: crypto.randomUUID(),
-        user_id: user.id,
-        company_id: companyId,
-        name: emp.full_name || "Unknown",
-        title: emp.job_title || "Unknown",
-        location: emp.location || body.location || "Not specified",
-        linkedinUrl: emp.linkedin_url || "",
-        relevanceScore: emp.relevance_score || "Good Contact",
-        source: "LinkedIn Paste",
-        created_at: new Date().toISOString(),
-      }));
+      const employeesToInsert = newEmployees.map((emp: LinkedInEmployee) => {
+        // ✅ FIX: Ensure all required fields are properly typed
+        const insertData = {
+          id: crypto.randomUUID(),
+          user_id: user.id,
+          company_id: companyId,
+          name: emp.full_name || "Unknown",
+          title: emp.job_title || "Unknown",
+          location: emp.location || body.location || "Not specified",
+          linkedinUrl: emp.linkedin_url || "",
+          relevanceScore: emp.relevance_score || "Good Contact",
+          source: "LinkedIn Paste",
+          department: emp.department || "Unknown",
+          seniority_level: emp.seniority_level || "Unknown",
+          years_at_company: emp.years_at_company || null,
+          profile_image: emp.profile_image || null,
+          created_at: new Date().toISOString(),
+        };
+
+        // ✅ FIX: Add validation to ensure data types match database schema
+        if (typeof insertData.name !== "string" || insertData.name.length === 0) {
+          console.warn(`⚠️ Invalid name for employee: ${JSON.stringify(emp)}`);
+          insertData.name = "Unknown";
+        }
+
+        if (typeof insertData.title !== "string" || insertData.title.length === 0) {
+          console.warn(`⚠️ Invalid title for employee: ${JSON.stringify(emp)}`);
+          insertData.title = "Unknown";
+        }
+
+        return insertData;
+      });
 
       console.log("💾 Inserting employees to database:", employeesToInsert.length);
 
@@ -577,6 +726,11 @@ export async function POST(req: NextRequest) {
         linkedinUrl: emp.linkedinUrl,
         relevanceScore: emp.relevanceScore,
         source: emp.source,
+        // ✅ Include new fields in response
+        department: emp.department,
+        seniorityLevel: emp.seniority_level,
+        yearsAtCompany: emp.years_at_company,
+        profileImage: emp.profile_image,
       }));
 
       const responseData = {

@@ -166,6 +166,10 @@ export interface Database {
           linkedinUrl: string | null;
           relevanceScore: string;
           source: string;
+          department: string | null;
+          seniority_level: string | null;
+          years_at_company: string | null;
+          profile_image: string | null;
           created_at: string;
         };
         Insert: {
@@ -178,6 +182,10 @@ export interface Database {
           linkedinUrl?: string | null;
           relevanceScore: string;
           source: string;
+          department?: string | null;
+          seniority_level?: string | null;
+          years_at_company?: string | null;
+          profile_image?: string | null;
           created_at?: string;
         };
         Update: {
@@ -190,6 +198,10 @@ export interface Database {
           linkedinUrl?: string | null;
           relevanceScore?: string;
           source?: string;
+          department?: string | null;
+          seniority_level?: string | null;
+          years_at_company?: string | null;
+          profile_image?: string | null;
           created_at?: string;
         };
       };

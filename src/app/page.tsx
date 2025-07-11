@@ -5,9 +5,20 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Menu, X, TrendingUp, Mail, Clock } from "lucide-react";
 import posthog from "posthog-js";
+import { TypingHeadline } from "@/components/ui/typing-headline";
+import { AnimatedCtaButton } from "@/components/ui/animated-cta-button";
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Subheadlines for typing animation - different value propositions
+  const subheadlines = [
+    "90% of job applications get ignored. We fix that.",
+    "Skip the job board queue. Contact decision-makers directly.",
+    "3.2x more interviews. 67% response rate vs 2% on job boards.",
+    "While others send 200+ apps, you'll send 20 targeted messages.",
+    "From application to interview in 5 days, not 5 months.",
+  ];
 
   useEffect(() => {
     posthog.capture("landing_page_viewed");
@@ -93,14 +104,15 @@ export default function LandingPage() {
             </li>
           </ul>
 
-          {/* Desktop CTA */}
-          <Link
+          {/* Desktop CTA - Enhanced */}
+          <AnimatedCtaButton
             href="/signup"
             onClick={() => handleSignupClick("navbar")}
-            className="hidden md:block bg-black text-white px-4 py-2 rounded-xl text-sm hover:bg-gray-800 transition-colors"
+            className="hidden md:flex"
+            showSparkles={false}
           >
             Start Free Trial
-          </Link>
+          </AnimatedCtaButton>
 
           {/* Mobile Menu Button */}
           <button
@@ -170,93 +182,155 @@ export default function LandingPage() {
                 </Link>
               </li>
             </ul>
-            <Link
+            <AnimatedCtaButton
               href="/signup"
               onClick={() => {
                 setMobileMenuOpen(false);
                 handleSignupClick("mobile_menu");
               }}
-              className="block mt-4 bg-black text-white px-4 py-3 rounded-xl text-sm text-center hover:bg-gray-800 transition-colors"
+              className="mt-4 w-full"
+              showSparkles={false}
             >
               Start Free Trial
-            </Link>
+            </AnimatedCtaButton>
           </div>
         )}
       </nav>
 
-      {/* Hero Section - Improved mobile spacing and text sizes */}
-      <section className="px-4 sm:px-6 py-8 sm:py-12 lg:py-20 text-center max-w-4xl mx-auto">
+      {/* Hero Section with animated background */}
+      <section className="relative px-4 sm:px-6 py-8 sm:py-12 lg:py-20 text-center max-w-4xl mx-auto overflow-hidden">
+        {/* Floating Blobs Background */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-200 to-purple-200"></div>
+          <div className="absolute top-20 left-10 w-64 h-64 bg-gradient-to-r from-blue-400/50 to-purple-400/50 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-r from-purple-400/40 to-pink-400/40 rounded-full blur-3xl animate-pulse-delayed"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-indigo-400/30 to-blue-400/30 rounded-full blur-3xl animate-pulse"></div>
+        </div>
+
+        {/* Your existing content here */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight px-2">
-          Stop Getting Ghosted on Job Applications
+          <span className="bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent animate-gradient">
+            Stop Getting Ghosted
+          </span>
+          <br />
+          <span className="text-gray-900">on Job Applications</span>
         </h1>
-        <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 text-gray-600 max-w-2xl mx-auto px-2">
-          90% of job applications get ignored. We fix that.
-        </p>
+
+        {/* Dynamic Typing Subheadline */}
+        <div className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 text-gray-600 max-w-2xl mx-auto px-2 min-h-[1.5em]">
+          <TypingHeadline
+            phrases={subheadlines}
+            className="block"
+            typingSpeed={60}
+            deletingSpeed={30}
+            pauseDuration={3000}
+          />
+        </div>
+
+        {/* Enhanced CTA Buttons */}
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-4 px-2">
-          <Link
+          <AnimatedCtaButton
             href="/signup"
             onClick={() => handleSignupClick("hero")}
-            className="bg-black text-white px-4 sm:px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center text-sm sm:text-base"
+            variant="primary"
+            showSparkles={true}
           >
             Find Jobs in 5 Minutes
-          </Link>
-          <Link
+          </AnimatedCtaButton>
+
+          <AnimatedCtaButton
             href="#demo"
             onClick={handleDemoClick}
-            className="text-gray-600 hover:text-gray-800 py-3 underline underline-offset-4 min-h-[44px] flex items-center justify-center transition-colors text-sm sm:text-base"
+            variant="secondary"
+            showSparkles={false}
           >
             See Demo
-          </Link>
+          </AnimatedCtaButton>
         </div>
+
         <p className="text-xs sm:text-sm text-gray-500">
           No credit card required • 1,200+ students hired
         </p>
 
-        {/* Before vs After Comparison - Side by side on desktop, stacked on mobile */}
-        <div className="mt-8 sm:mt-10 flex flex-col lg:flex-row gap-4 sm:gap-6 justify-center items-start max-w-6xl mx-auto">
+        {/* Before vs After Comparison */}
+        <div className="mt-8 sm:mt-10 flex flex-col lg:flex-row gap-8 justify-center items-start max-w-6xl mx-auto">
           {/* Traditional Applications */}
-          <div className="w-full lg:w-1/2">
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 sm:p-6 shadow-sm">
-              <h3 className="text-base sm:text-lg font-semibold text-red-800 mb-3 sm:mb-4 text-center">
+          <div className="w-full lg:w-1/2 transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+            <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl p-6 shadow-xl border border-slate-300 relative overflow-hidden">
+              {/* Torn paper effect */}
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-400 via-red-500 to-red-400"></div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                <span className="text-slate-600 text-sm font-medium ml-2">
+                  rejection_emails.txt
+                </span>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4 text-center">
                 This is what most applications get you
               </h3>
-              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700">
-                <p>
-                  <span className="bg-yellow-200 px-1 rounded">Unfortunately</span>, after careful
-                  consideration, we've decided to move forward with other candidates whose
-                  qualifications more closely match the requirements of the position.
-                </p>
-                <p>
-                  We have carefully reviewed your application and{" "}
-                  <span className="bg-yellow-200 px-1 rounded">unfortunately</span>, we have decided
-                  not to move forward with your application at this time.
-                </p>
-                <p>
-                  <span className="bg-yellow-200 px-1 rounded">Unfortunately</span> we are unable to
-                  provide feedback due to the high volume of applications received.
-                </p>
-                <p>
-                  <span className="bg-yellow-200 px-1 rounded">Unfortunately</span>, we won't be
-                  progressing your application to the next stage. We know this may be disappointing
-                  but we really value your time and efforts.
-                </p>
-                <p>
-                  After reviewing your application,{" "}
-                  <span className="bg-yellow-200 px-1 rounded">unfortunately</span> we will not be
-                  proceeding with your application at this time.
-                </p>
+
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm text-slate-700">
+                <div className="bg-white/80 p-3 rounded-xl shadow-sm border-l-4 border-red-400">
+                  <p>
+                    <span className="bg-yellow-200 px-1 rounded">Unfortunately</span>, after careful
+                    consideration, we've decided to move forward with other candidates whose
+                    qualifications more closely match the requirements of the position.
+                  </p>
+                </div>
+                <div className="bg-white/80 p-3 rounded-xl shadow-sm border-l-4 border-red-400">
+                  <p>
+                    We have carefully reviewed your application and{" "}
+                    <span className="bg-yellow-200 px-1 rounded">unfortunately</span>, we have
+                    decided not to move forward with your application at this time.
+                  </p>
+                </div>
+                <div className="bg-white/80 p-3 rounded-xl shadow-sm border-l-4 border-red-400">
+                  <p>
+                    <span className="bg-yellow-200 px-1 rounded">Unfortunately</span> we are unable
+                    to provide feedback due to the high volume of applications received.
+                  </p>
+                </div>
+                <div className="bg-white/80 p-3 rounded-xl shadow-sm border-l-4 border-red-400">
+                  <p>
+                    <span className="bg-yellow-200 px-1 rounded">Unfortunately</span>, we won't be
+                    progressing your application to the next stage. We know this may be
+                    disappointing but we really value your time and efforts.
+                  </p>
+                </div>
+                <div className="bg-white/80 p-3 rounded-xl shadow-sm border-l-4 border-red-400">
+                  <p>
+                    After reviewing your application,{" "}
+                    <span className="bg-yellow-200 px-1 rounded">unfortunately</span> we will not be
+                    proceeding with your application at this time.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Bypass Results */}
-          <div className="w-full lg:w-1/2">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 sm:p-6 shadow-sm">
-              <h3 className="text-base sm:text-lg font-semibold text-green-800 mb-3 sm:mb-4 text-center">
+          <div className="w-full lg:w-1/2 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-3xl p-6 shadow-xl border border-emerald-200 relative overflow-hidden">
+              {/* Success ribbon */}
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400"></div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse delay-100"></div>
+                <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse delay-200"></div>
+                <span className="text-slate-600 text-sm font-medium ml-2">success_replies.txt</span>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3 sm:mb-4 text-center">
                 This is what Bypass users receive
               </h3>
+
               <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700">
-                <div>
+                <div className="bg-white/90 p-3 rounded-xl shadow-sm border-l-4 border-emerald-400">
                   <p className="mb-2">
                     Hi, we'd be happy to schedule an interview with you. Would Wednesday at 2:00 PM
                     work for you?
@@ -264,7 +338,7 @@ export default function LandingPage() {
                   <p className="text-green-600 font-medium">✅ Interview Scheduled</p>
                 </div>
 
-                <div>
+                <div className="bg-white/90 p-3 rounded-xl shadow-sm border-l-4 border-blue-400">
                   <p className="mb-2">
                     Let's have a quick call to discuss the role further. Does tomorrow around 11:30
                     AM suit you?
@@ -272,7 +346,7 @@ export default function LandingPage() {
                   <p className="text-blue-600 font-medium">📞 Call Confirmed</p>
                 </div>
 
-                <div>
+                <div className="bg-white/90 p-3 rounded-xl shadow-sm border-l-4 border-purple-400">
                   <p className="mb-2">
                     You can reach out to Julia and share your CV directly with her, she's leading
                     the recruitment for this position.
@@ -280,7 +354,7 @@ export default function LandingPage() {
                   <p className="text-purple-600 font-medium">🎯 Referral Response</p>
                 </div>
 
-                <div>
+                <div className="bg-white/90 p-3 rounded-xl shadow-sm border-l-4 border-orange-400">
                   <p className="mb-2">
                     Hey, got your message. Yes, we can definitely have a quick conversation. How
                     about sometime tomorrow morning?
@@ -610,10 +684,10 @@ export default function LandingPage() {
             <p className="text-xs text-gray-500 mt-2">No credit card required</p>
           </div>
 
-          <div className="border rounded-xl p-4 sm:p-6 bg-black text-white shadow-lg relative">
+          <div className="border rounded-xl p-4 sm:p-6 bg-black text-white shadow-lg relative opacity-60">
             <div className="absolute -top-2 sm:-top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-yellow-400 text-yellow-900 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
-                ⚡ For serious job seekers
+              <span className="bg-orange-400 text-orange-900 px-2 sm:px-3 py-1 rounded-full text-xs font-medium">
+                🚧 Not available in beta
               </span>
             </div>
             <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 mt-2">Premium — €9.99</h3>
@@ -668,13 +742,13 @@ export default function LandingPage() {
                 </div>
               </li>
             </ul>
-            <Link
-              href="/signup"
-              className="block w-full bg-white text-black px-4 py-3 rounded-xl font-medium hover:bg-gray-100 transition-colors text-sm sm:text-base"
+            <button
+              disabled
+              className="block w-full bg-gray-600 text-gray-400 px-4 py-3 rounded-xl font-medium cursor-not-allowed text-sm sm:text-base"
             >
-              Upgrade to Premium
-            </Link>
-            <p className="text-xs text-gray-300 mt-2">30-day money-back guarantee</p>
+              Coming After Beta
+            </button>
+            <p className="text-xs text-gray-300 mt-2">Available when we exit beta</p>
           </div>
         </div>
 
@@ -695,14 +769,16 @@ export default function LandingPage() {
             Start finding decision-makers instead of applying to black holes
           </p>
 
-          <Link
+          <AnimatedCtaButton
             href="/signup"
-            className="inline-block bg-black text-white px-8 py-4 rounded-xl font-medium hover:bg-gray-800 transition-colors text-lg mb-4"
+            onClick={() => handleSignupClick("final_cta")}
+            variant="primary"
+            showSparkles={true}
           >
             Start Now – No Credit Card Required
-          </Link>
+          </AnimatedCtaButton>
 
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500 mt-6">
             <span>✅ Free forever</span>
             <span>✅ 5 free emails</span>
             <span>✅ 2-minute setup</span>

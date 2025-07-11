@@ -1,54 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai, supportsWebSearch, debugWebSearchSupport } from "@/lib/openai/client";
+import { openai, supportsWebSearch } from "@/lib/openai/client";
 
 export async function GET(req: NextRequest) {
   try {
-    // Debug web search support
-    debugWebSearchSupport();
-
     if (!supportsWebSearch()) {
-      return NextResponse.json(
-        {
-          error: "Web search not supported",
-          details: {
-            openaiExists: !!openai,
-            responsesExists: !!openai?.responses,
-            responsesCreateExists: !!openai?.responses?.create,
-          },
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Web search not supported" }, { status: 500 });
     }
 
-    // Test simple web search
-    console.log("🧪 Testing simple web search...");
+    console.log("🧪 Running DECISIVE WebSearch test...");
 
-    const testResponse = await openai!.responses.create({
+    // Test 1: Something that requires TODAY'S web access
+    const currentTest = await openai!.responses.create({
       model: "gpt-4.1",
-      tools: [
-        {
-          type: "web_search_preview",
-          search_context_size: "medium",
-        },
-      ],
+      tools: [{ type: "web_search_preview", search_context_size: "medium" }],
       input:
-        "What is Pierre Fabre company? Give me basic information about this French pharmaceutical company.",
+        "What is the current stock price of Apple (AAPL) right now today? Visit a financial website to get the exact current price.",
     });
 
-    console.log("✅ Web search test successful");
-    console.log("Response:", JSON.stringify(testResponse, null, 2));
+    // Test 2: Very recent news (last 7 days)
+    const newsTest = await openai!.responses.create({
+      model: "gpt-4.1",
+      tools: [{ type: "web_search_preview", search_context_size: "medium" }],
+      input:
+        "What major tech news happened in the last 7 days? Search for recent tech news from this week.",
+    });
+
+    // Extract results
+    const extractInfo = (response: any) => {
+      const message = response.output.find((item: any) => item.type === "message");
+      const content = message?.content?.[0];
+      return {
+        text: content?.text || "",
+        citations: content?.annotations || [],
+        usedWebSearch: response.output.some((x: any) => x.type === "web_search_call"),
+      };
+    };
+
+    const currentInfo = extractInfo(currentTest);
+    const newsInfo = extractInfo(newsTest);
+
+    // Get today's date for comparison
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const currentYear = new Date().getFullYear();
+
+    // Analysis
+    const analysis = {
+      stockTest: {
+        hasCitations: currentInfo.citations.length > 0,
+        mentionsCurrentPrice: currentInfo.text.includes("$") && currentInfo.text.includes("AAPL"),
+        citationsCount: currentInfo.citations.length,
+      },
+      newsTest: {
+        hasCitations: newsInfo.citations.length > 0,
+        mentionsCurrentYear: newsInfo.text.includes(currentYear.toString()),
+        mentionsRecentDates: newsInfo.text.includes("2025"),
+        citationsCount: newsInfo.citations.length,
+      },
+      totalCitations: currentInfo.citations.length + newsInfo.citations.length,
+    };
+
+    // Decisive conclusion
+    const isRealWebSearch =
+      analysis.totalCitations > 0 &&
+      (analysis.stockTest.mentionsCurrentPrice || analysis.newsTest.mentionsRecentDates);
+
+    console.log("📊 DECISIVE Test Results:");
+    console.log("- Total citations:", analysis.totalCitations);
+    console.log("- Stock price info:", analysis.stockTest.mentionsCurrentPrice);
+    console.log("- Recent news:", analysis.newsTest.mentionsRecentDates);
+    console.log("- CONCLUSION:", isRealWebSearch ? "REAL" : "FAKE");
 
     return NextResponse.json({
       success: true,
-      message: "Web search is working",
-      response: testResponse,
+      analysis,
+      stockResponse: currentInfo.text.substring(0, 300),
+      newsResponse: newsInfo.text.substring(0, 300),
+      allCitations: [...currentInfo.citations, ...newsInfo.citations],
+      decisiveConclusion: isRealWebSearch
+        ? "🎉 WebSearch is REAL - It can access current web data!"
+        : "❌ WebSearch is FAKE - No real-time web access, just enhanced training data",
     });
   } catch (error) {
-    console.error("❌ Web search test failed:", error);
-
+    console.error("❌ Decisive test failed:", error);
     return NextResponse.json(
       {
-        error: "Web search test failed",
+        error: "Decisive test failed",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }

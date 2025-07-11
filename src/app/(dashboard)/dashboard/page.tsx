@@ -261,8 +261,8 @@ export default function DashboardPage() {
         {/* Compact Header with Status */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back, {userName} 👋</h1>
-            <p className="text-gray-600">Ready to skip the job board queue?</p>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {userName} 👋</h1>
+            <p className="text-lg text-gray-600">Let's find your next opportunity!</p>
           </div>
 
           {/* Compact Status Indicators */}
@@ -341,23 +341,23 @@ export default function DashboardPage() {
                 decision makers.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 size="lg"
-                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-lg"
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold shadow-lg px-8 py-4 text-lg"
                 onClick={handleStartNewSearch}
               >
-                <Search className="mr-2 h-5 w-5" />
+                <Search className="mr-3 h-6 w-6" />
                 Start New Search
               </Button>
 
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 text-lg"
                 onClick={() => router.push("/find-email")}
               >
-                <Mail className="mr-2 h-5 w-5" />
+                <Mail className="mr-3 h-6 w-6" />
                 Find Email Address
               </Button>
             </div>
@@ -584,17 +584,18 @@ export default function DashboardPage() {
                 )}
               </>
             ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Mail className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No email addresses generated yet
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🚀</div>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                  Ready to start your job search?
                 </h3>
-                <p className="text-gray-500 mb-6">
-                  Complete your first search and generate email addresses to see them here.
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                  Click "Start New Search" above to find companies and contacts that match your
+                  profile.
                 </p>
-                <Button onClick={handleStartNewSearch}>Start Your First Search</Button>
+                <Button onClick={handleStartNewSearch} size="lg" className="px-8 py-3">
+                  Start Your First Search
+                </Button>
               </div>
             )}
           </div>

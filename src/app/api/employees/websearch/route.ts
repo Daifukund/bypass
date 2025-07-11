@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { EmployeeSearchService } from "@/lib/openai";
+import { inferDepartment, inferSeniorityLevel } from "@/lib/utils";
 import crypto from "crypto";
 
 // Type guard function to check if object is an employee
@@ -225,6 +226,15 @@ export async function POST(req: NextRequest) {
         linkedinUrl: emp.linkedinUrl || emp.linkedin_url || "",
         relevanceScore: relevanceScore,
         source: emp.source || "OpenAI Web Search",
+        // ✅ Add new fields with inference
+        department:
+          emp.department || inferDepartment(emp.jobTitle || emp.job_title || emp.title || ""),
+        seniorityLevel:
+          emp.seniorityLevel ||
+          emp.seniority_level ||
+          inferSeniorityLevel(emp.jobTitle || emp.job_title || emp.title || ""),
+        yearsAtCompany: emp.yearsAtCompany || emp.years_at_company || null,
+        profileImage: emp.profileImage || emp.profile_image || null,
       };
     });
 
@@ -240,6 +250,11 @@ export async function POST(req: NextRequest) {
       linkedinUrl: emp.linkedinUrl,
       relevanceScore: emp.relevanceScore,
       source: emp.source,
+      // ✅ Add new fields
+      department: emp.department,
+      seniority_level: emp.seniorityLevel,
+      years_at_company: emp.yearsAtCompany,
+      profile_image: emp.profileImage,
       created_at: new Date().toISOString(),
     }));
 

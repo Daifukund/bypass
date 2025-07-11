@@ -18,6 +18,8 @@ import {
   FlaskConical,
   CheckCircle,
   Clock,
+  Building,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -209,25 +211,13 @@ export default function EmployeesPage() {
       return;
     }
 
-    // ✅ Enhanced loading state management
-    setIsExtracting(true);
     setIsLoading(true);
     setExtractionMessage("");
     setExtractionError("");
-    setExtractionProgress(0);
-
-    // ✅ Simulate progress with status updates
-    const updateProgress = (progress: number, status: string) => {
-      setExtractionProgress(progress);
-      setExtractionStatus(status);
-    };
 
     try {
-      updateProgress(10, "Analyzing LinkedIn content...");
       console.log("🔍 Extracting employees from LinkedIn paste...");
       console.log("📄 Content preview:", linkedinContent.substring(0, 200) + "...");
-
-      updateProgress(30, "Processing employee data...");
 
       // Call API to extract employees from LinkedIn paste
       const response = await fetch("/api/employees/extract-from-paste", {
@@ -243,13 +233,9 @@ export default function EmployeesPage() {
         }),
       });
 
-      updateProgress(60, "Extracting contact information...");
-
       const result = await response.json();
 
       console.log("📥 API Response:", result);
-
-      updateProgress(80, "Validating results...");
 
       if (!response.ok) {
         console.error("❌ API Error:", result);
@@ -257,8 +243,6 @@ export default function EmployeesPage() {
       }
 
       if (result.success && result.employees && result.employees.length > 0) {
-        updateProgress(90, "Finalizing employee list...");
-
         // Transform API response to match frontend format
         const transformedEmployees = result.employees.map((emp: any) => ({
           id: emp.id,
@@ -268,17 +252,18 @@ export default function EmployeesPage() {
           linkedinUrl: emp.linkedinUrl,
           relevanceScore: emp.relevanceScore,
           source: emp.source,
+          department: emp.department,
+          seniorityLevel: emp.seniority_level,
+          yearsAtCompany: emp.years_at_company,
+          profileImage: emp.profile_image,
         }));
 
-        // Add extracted employees to existing list
+        // ✅ REPLACE AI-proposed employees with extracted employees
         const { setEmployees } = useSearchStore.getState();
-        const currentEmployees = useSearchStore.getState().employees;
-        setEmployees([...currentEmployees, ...transformedEmployees]);
-
-        updateProgress(100, "Complete!");
+        setEmployees(transformedEmployees); // Remove currentEmployees spread
 
         setExtractionMessage(
-          `✅ Success! Added ${transformedEmployees.length} employee${
+          `✅ Success! Replaced with ${transformedEmployees.length} employee${
             transformedEmployees.length === 1 ? "" : "s"
           } from LinkedIn.`
         );
@@ -295,19 +280,13 @@ export default function EmployeesPage() {
           }
         }, 500);
       } else {
-        throw new Error("No employees found in the pasted content. Please try again.");
+        setExtractionError("No employees found in the pasted content. Please try again.");
       }
     } catch (error: any) {
       console.error("❌ LinkedIn paste error:", error);
       setExtractionError(error.message || "Failed to extract employees. Please try again.");
     } finally {
-      // ✅ Reset loading states with a small delay to show completion
-      setTimeout(() => {
-        setIsExtracting(false);
-        setIsLoading(false);
-        setExtractionProgress(0);
-        setExtractionStatus("");
-      }, 1000);
+      setIsLoading(false);
     }
   };
 
@@ -518,6 +497,7 @@ export default function EmployeesPage() {
                 {/* Employee Info */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
+                    {/* ✅ ENHANCE: Profile Image Avatar */}
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold text-lg">
                       {employee.fullName?.charAt(0)?.toUpperCase() || "U"}
                     </div>
@@ -539,7 +519,31 @@ export default function EmployeesPage() {
                     <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
                   </div>
 
-                  {/* Location */}
+                  {/* ✅ ADD: Department */}
+                  {employee.department && employee.department !== "Unknown" && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Building className="h-4 w-4 mr-1" />
+                      <span className="line-clamp-1">{employee.department}</span>
+                    </div>
+                  )}
+
+                  {/* ✅ ADD: Seniority Level */}
+                  {employee.seniorityLevel && employee.seniorityLevel !== "Unknown" && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      <span className="line-clamp-1">{employee.seniorityLevel}</span>
+                    </div>
+                  )}
+
+                  {/* ✅ ADD: Years at Company */}
+                  {employee.yearsAtCompany && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span className="line-clamp-1">{employee.yearsAtCompany}</span>
+                    </div>
+                  )}
+
+                  {/* Existing Location */}
                   {employee.location && (
                     <div className="flex items-center text-sm text-gray-500">
                       <MapPin className="h-4 w-4 mr-1" />
@@ -547,7 +551,7 @@ export default function EmployeesPage() {
                     </div>
                   )}
 
-                  {/* LinkedIn Link */}
+                  {/* Existing LinkedIn Link */}
                   {employee.linkedinUrl && (
                     <div className="flex items-center text-sm text-blue-600">
                       <Linkedin className="h-4 w-4 mr-1" />
@@ -684,16 +688,16 @@ export default function EmployeesPage() {
           <textarea
             value={linkedinContent}
             onChange={handleLinkedinContentChange}
-            disabled={isExtracting} // ✅ Disable during extraction
+            disabled={isLoading} // ✅ Disable during extraction
             placeholder={
-              isExtracting
+              isLoading
                 ? "Processing your LinkedIn content..."
                 : showLinkedInReminder
                   ? "Paste content here (Ctrl/⌘+V)"
                   : "Paste LinkedIn page content here..."
             }
             className={`w-full h-32 p-3 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-              isExtracting
+              isLoading
                 ? "bg-gray-100 cursor-not-allowed"
                 : showLinkedInReminder
                   ? "border-2 border-green-400 bg-green-50"
@@ -701,30 +705,16 @@ export default function EmployeesPage() {
             }`}
           />
 
-          {/* ✅ Progress Bar and Status - Show during extraction */}
-          {isExtracting && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-              <div className="flex items-center space-x-2 text-sm text-blue-700">
-                <Clock className="h-3 w-3" />
-                <span>{extractionStatus}</span>
-              </div>
-
-              <p className="text-xs text-blue-600">
-                Please wait while we analyze the LinkedIn content and extract employee information.
-              </p>
-            </div>
-          )}
-
           <div className="flex space-x-2">
             <Button
               onClick={handleLinkedInPaste}
-              disabled={!linkedinContent.trim() || isExtracting}
+              disabled={!linkedinContent.trim() || isLoading}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {isExtracting ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Extracting... ({Math.round(extractionProgress)}%)
+                  Extracting...
                 </>
               ) : (
                 "Extract Employees"
@@ -733,7 +723,7 @@ export default function EmployeesPage() {
 
             <Button
               variant="outline"
-              disabled={isExtracting} // ✅ Disable clear during extraction
+              disabled={isLoading}
               onClick={() => {
                 setLinkedinContent("");
                 setExtractionMessage("");

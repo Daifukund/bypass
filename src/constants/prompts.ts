@@ -359,7 +359,7 @@ Return ONLY the URL, nothing else. Do not modify or change the facetGeoRegion va
    * Used for extracting employee data from pasted LinkedIn content
    */
   LINKEDIN_PASTE_ANALYSIS: (content: string, companyName: string): string => `
-You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results.
+You are an expert LinkedIn content analyzer. Extract employee profiles from LinkedIn search results with enhanced details.
 
 Company: ${companyName}
 
@@ -371,7 +371,11 @@ ${content}
    - "FirstName LastName" followed by job title
    - Job titles on separate lines after names
    - Location information (city, country)
-   - Any LinkedIn profile URLs
+   - Department/team information (Marketing, Engineering, Sales, etc.)
+   - Seniority indicators (Senior, Junior, Lead, Manager, Director, etc.)
+   - Years of experience or tenure (2+ years, 5 years at company, etc.)
+   - LinkedIn profile URLs
+   - Profile images (avatar URLs)
 
 2. IGNORE these elements:
    - Navigation text ("Skip to search", "notifications", etc.)
@@ -383,29 +387,54 @@ ${content}
    - Names with initials are OK (e.g., "John D.")
    - Basic job titles are OK (e.g., "Manager", "Analyst")
    - Missing locations are OK
+   - Infer department from job title if not explicitly stated
+   - Estimate seniority level from job title
 
 📝 COMMON LINKEDIN PATTERNS:
-- "John Smith\nSenior Manager\nLondon, UK"
-- "Jane Doe • Marketing Director • Paris, France"
-- "Mike Johnson | Product Manager | New York"
-- "Sarah Wilson\nData Analyst\nRemote"
+- "John Smith\nSenior Marketing Manager\nMarketing Team\nLondon, UK\n3+ years"
+- "Jane Doe • Engineering Director • Tech Department • Paris, France"
+- "Mike Johnson | Product Manager | Product Team | New York | 5 years at company"
+- "Sarah Wilson\nJunior Data Analyst\nAnalytics\nRemote"
 
-✅ REQUIRED JSON FORMAT:
+🏢 DEPARTMENT INFERENCE:
+- Marketing Manager → "Marketing"
+- Software Engineer → "Engineering" 
+- Sales Representative → "Sales"
+- HR Business Partner → "Human Resources"
+- Financial Analyst → "Finance"
+- Product Manager → "Product"
+- Data Scientist → "Data & Analytics"
+
+📊 SENIORITY LEVEL MAPPING:
+- Intern, Junior, Associate, Analyst → "Entry-level"
+- Manager, Senior, Lead, Specialist → "Mid-level"  
+- Senior Manager, Principal, Staff → "Senior"
+- Director, VP, Head of → "Executive"
+- C-Level (CEO, CTO, CFO) → "C-Level"
+- If unclear → "Unknown"
+
+✅ ENHANCED JSON FORMAT:
 [
   {
     "full_name": "John Smith",
-    "job_title": "Senior Manager", 
+    "job_title": "Senior Marketing Manager", 
     "location": "London, UK",
-    "linkedin_url": "",
-    "relevance_score": "Good Contact"
+    "department": "Marketing",
+    "seniority_level": "Mid-level",
+    "years_at_company": "3+ years",
+    "linkedin_url": "https://linkedin.com/in/johnsmith",
+    "profile_image": "https://media.licdn.com/dms/image/...",
+    "relevance_score": "Perfect Contact"
   }
 ]
 
 🎯 IMPORTANT:
 - Extract ANY profile that looks like a real person with a job title
+- Infer missing information intelligently from job titles
 - Don't be too strict - partial information is better than none
 - If you find NO profiles, return empty array []
 - Maximum 25 profiles
+- Always try to extract or infer department and seniority level
 
 Return ONLY the JSON array, no explanations.
 `,

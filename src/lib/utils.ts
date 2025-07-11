@@ -193,3 +193,119 @@ export function cleanEmailContent(content: string): string {
 
   return cleaned;
 }
+
+/**
+ * Infer department from job title
+ */
+export function inferDepartment(jobTitle: string): string {
+  if (!jobTitle) return "Unknown";
+
+  const title = jobTitle.toLowerCase();
+
+  if (title.includes("marketing") || title.includes("brand") || title.includes("campaign")) {
+    return "Marketing";
+  } else if (
+    title.includes("engineer") ||
+    title.includes("developer") ||
+    title.includes("tech") ||
+    title.includes("software")
+  ) {
+    return "Engineering";
+  } else if (
+    title.includes("sales") ||
+    title.includes("account") ||
+    title.includes("business development")
+  ) {
+    return "Sales";
+  } else if (
+    title.includes("hr") ||
+    title.includes("human resources") ||
+    title.includes("people") ||
+    title.includes("talent")
+  ) {
+    return "Human Resources";
+  } else if (
+    title.includes("finance") ||
+    title.includes("accounting") ||
+    title.includes("controller")
+  ) {
+    return "Finance";
+  } else if (title.includes("product") || title.includes("pm")) {
+    return "Product";
+  } else if (title.includes("data") || title.includes("analytics") || title.includes("scientist")) {
+    return "Data & Analytics";
+  } else if (title.includes("design") || title.includes("ux") || title.includes("ui")) {
+    return "Design";
+  } else if (title.includes("operations") || title.includes("ops")) {
+    return "Operations";
+  } else if (title.includes("legal") || title.includes("counsel")) {
+    return "Legal";
+  }
+
+  return "Other";
+}
+
+/**
+ * Infer seniority level from job title
+ */
+export function inferSeniorityLevel(jobTitle: string): string {
+  if (!jobTitle) return "Unknown";
+
+  const title = jobTitle.toLowerCase();
+
+  // C-Level
+  if (
+    title.includes("ceo") ||
+    title.includes("cto") ||
+    title.includes("cfo") ||
+    title.includes("chief") ||
+    title.includes("founder")
+  ) {
+    return "C-Level";
+  }
+
+  // Executive
+  if (
+    title.includes("director") ||
+    title.includes("vp") ||
+    title.includes("vice president") ||
+    title.includes("head of") ||
+    title.includes("executive")
+  ) {
+    return "Executive";
+  }
+
+  // Senior
+  if (
+    title.includes("senior manager") ||
+    title.includes("principal") ||
+    title.includes("staff") ||
+    (title.includes("lead") && title.includes("senior"))
+  ) {
+    return "Senior";
+  }
+
+  // Mid-level
+  if (
+    title.includes("manager") ||
+    title.includes("senior") ||
+    title.includes("lead") ||
+    title.includes("specialist") ||
+    title.includes("coordinator")
+  ) {
+    return "Mid-level";
+  }
+
+  // Entry-level
+  if (
+    title.includes("intern") ||
+    title.includes("junior") ||
+    title.includes("associate") ||
+    title.includes("analyst") ||
+    title.includes("assistant")
+  ) {
+    return "Entry-level";
+  }
+
+  return "Unknown";
+}
