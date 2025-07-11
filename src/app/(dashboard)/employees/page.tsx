@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSearchStore } from "@/stores/search-store";
 import { useAppStore } from "@/stores/app-store";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress"; // Add this import
 import {
   ArrowLeft,
   User,
@@ -14,6 +15,9 @@ import {
   AlertCircle,
   Loader2,
   Users,
+  FlaskConical,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -47,8 +51,8 @@ const EmptyEmployeesState = ({ onScrollToEmail }: { onScrollToEmail: () => void 
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">No Employees Found</h3>
       <p className="text-gray-600 max-w-md mx-auto mb-6">
-        We couldn't find employees automatically at this company. This might be because it's a newer
-        company or our AI search needs help.
+        Our AI search (beta) couldn't find employees automatically. This is common for newer
+        companies or specific roles.
       </p>
       <div className="space-y-3">
         <Button onClick={onScrollToEmail} className="bg-blue-600 hover:bg-blue-700">
@@ -56,7 +60,7 @@ const EmptyEmployeesState = ({ onScrollToEmail }: { onScrollToEmail: () => void 
           Try LinkedIn Search Instead
         </Button>
         <div className="text-sm text-gray-500">
-          <p>We'll help you generate a LinkedIn search and extract results</p>
+          <p>The LinkedIn paste method below usually works much better!</p>
         </div>
       </div>
     </div>
@@ -91,6 +95,11 @@ export default function EmployeesPage() {
   const [extractionMessage, setExtractionMessage] = useState<string>("");
   const [extractionError, setExtractionError] = useState<string>("");
   const [showLinkedInReminder, setShowLinkedInReminder] = useState(false);
+
+  // ✅ NEW: Enhanced loading states for LinkedIn extraction
+  const [extractionProgress, setExtractionProgress] = useState(0);
+  const [extractionStatus, setExtractionStatus] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
 
   // ✅ Better handling of direct navigation
   useEffect(() => {
@@ -200,13 +209,25 @@ export default function EmployeesPage() {
       return;
     }
 
+    // ✅ Enhanced loading state management
+    setIsExtracting(true);
     setIsLoading(true);
     setExtractionMessage("");
     setExtractionError("");
+    setExtractionProgress(0);
+
+    // ✅ Simulate progress with status updates
+    const updateProgress = (progress: number, status: string) => {
+      setExtractionProgress(progress);
+      setExtractionStatus(status);
+    };
 
     try {
+      updateProgress(10, "Analyzing LinkedIn content...");
       console.log("🔍 Extracting employees from LinkedIn paste...");
       console.log("📄 Content preview:", linkedinContent.substring(0, 200) + "...");
+
+      updateProgress(30, "Processing employee data...");
 
       // Call API to extract employees from LinkedIn paste
       const response = await fetch("/api/employees/extract-from-paste", {
@@ -222,9 +243,13 @@ export default function EmployeesPage() {
         }),
       });
 
+      updateProgress(60, "Extracting contact information...");
+
       const result = await response.json();
 
       console.log("📥 API Response:", result);
+
+      updateProgress(80, "Validating results...");
 
       if (!response.ok) {
         console.error("❌ API Error:", result);
@@ -232,6 +257,8 @@ export default function EmployeesPage() {
       }
 
       if (result.success && result.employees && result.employees.length > 0) {
+        updateProgress(90, "Finalizing employee list...");
+
         // Transform API response to match frontend format
         const transformedEmployees = result.employees.map((emp: any) => ({
           id: emp.id,
@@ -248,50 +275,39 @@ export default function EmployeesPage() {
         const currentEmployees = useSearchStore.getState().employees;
         setEmployees([...currentEmployees, ...transformedEmployees]);
 
-        // Show enhanced success message with quality metrics
-        const qualityInfo = result.quality || {};
-        const processingInfo = result.processing || {};
-
-        console.log(`✅ Successfully extracted ${result.employees.length} employees!`);
+        updateProgress(100, "Complete!");
 
         setExtractionMessage(
-          `✅ Successfully extracted ${result.employees.length} new employees! ` +
-            `Quality: ${qualityInfo.perfectContacts || 0} perfect matches, ${qualityInfo.goodContacts || 0} good contacts. ` +
-            `${processingInfo.duplicatesSkipped > 0 ? `Skipped ${processingInfo.duplicatesSkipped} duplicates.` : ""}`
+          `✅ Success! Added ${transformedEmployees.length} employee${
+            transformedEmployees.length === 1 ? "" : "s"
+          } from LinkedIn.`
         );
         setLinkedinContent("");
 
-        // 🚀 IMPROVEMENT: Scroll to top to show extracted employees
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-
-        // Auto-hide message after 5 seconds (longer to read quality info)
-        setTimeout(() => setExtractionMessage(""), 5000);
+        // Scroll to show new results
+        setTimeout(() => {
+          const aiSection = document.getElementById("ai-results");
+          if (aiSection) {
+            aiSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        }, 500);
       } else {
-        // More specific error messages
-        if (result.total === 0) {
-          setExtractionError(
-            "No employees found in the pasted content. Make sure you:\n" +
-              "1. Copied the full LinkedIn people search page (not company page)\n" +
-              "2. The content includes employee names and job titles\n" +
-              "3. Try searching for a different role or use 'All filters' on LinkedIn"
-          );
-        } else {
-          setExtractionError(
-            result.message || "No valid employees found. Please check the pasted content format."
-          );
-        }
+        throw new Error("No employees found in the pasted content. Please try again.");
       }
-    } catch (error) {
-      console.error("❌ Extraction error:", error);
-      setExtractionError(
-        `Error: ${error instanceof Error ? error.message : "Something went wrong"}. ` +
-          "Please try again or make sure you copied valid LinkedIn search results."
-      );
+    } catch (error: any) {
+      console.error("❌ LinkedIn paste error:", error);
+      setExtractionError(error.message || "Failed to extract employees. Please try again.");
     } finally {
-      setIsLoading(false);
+      // ✅ Reset loading states with a small delay to show completion
+      setTimeout(() => {
+        setIsExtracting(false);
+        setIsLoading(false);
+        setExtractionProgress(0);
+        setExtractionStatus("");
+      }, 1000);
     }
   };
 
@@ -471,83 +487,103 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* ✅ Enhanced Employees Section */}
+      {/* ✅ Enhanced Employees Section with Beta Notice */}
       {employees.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {employees.map((employee, index) => (
-            <div
-              key={employee.id || index}
-              className="bg-white border rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer group"
-              onClick={() => handleSelectEmployee(employee)}
-            >
-              {/* Employee Info */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold text-lg">
-                    {employee.fullName?.charAt(0)?.toUpperCase() || "U"}
+        <div className="mb-8">
+          {/* Beta Notice for AI Results */}
+          <div className="flex items-center space-x-2 mb-4">
+            <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+              <FlaskConical className="h-3 w-3" />
+              <span>BETA</span>
+            </span>
+            <p className="text-sm text-orange-700">
+              AI employee discovery is experimental. For best results, use the{" "}
+              <button
+                onClick={scrollToEmailGeneration}
+                className="text-orange-800 underline hover:text-orange-900 font-medium"
+              >
+                LinkedIn search method below
+              </button>
+              .
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {employees.map((employee, index) => (
+              <div
+                key={employee.id || index}
+                className="bg-white border rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer group"
+                onClick={() => handleSelectEmployee(employee)}
+              >
+                {/* Employee Info */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold text-lg">
+                      {employee.fullName?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
                   </div>
+
+                  {/* Relevance Score Badge */}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getRelevanceColor(employee.relevanceScore)}`}
+                  >
+                    {employee.relevanceScore}
+                  </span>
                 </div>
 
-                {/* Relevance Score Badge */}
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium border ${getRelevanceColor(employee.relevanceScore)}`}
-                >
-                  {employee.relevanceScore}
-                </span>
-              </div>
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+                      {employee.fullName}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
+                  </div>
 
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
-                    {employee.fullName}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-1">{employee.jobTitle}</p>
+                  {/* Location */}
+                  {employee.location && (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      <span className="line-clamp-1">{employee.location}</span>
+                    </div>
+                  )}
+
+                  {/* LinkedIn Link */}
+                  {employee.linkedinUrl && (
+                    <div className="flex items-center text-sm text-blue-600">
+                      <Linkedin className="h-4 w-4 mr-1" />
+                      <a
+                        href={employee.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline line-clamp-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        View Profile
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Credit Usage Info */}
+                  {!isPremium && (
+                    <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                      Uses 1 credit for email address generation
+                    </div>
+                  )}
+
+                  {/* Contact Button */}
+                  <Button
+                    className="w-full mt-4"
+                    size="sm"
+                    disabled={!isPremium && emailCreditsUsed >= maxFreeCredits}
+                  >
+                    {!isPremium && emailCreditsUsed >= maxFreeCredits
+                      ? "Upgrade Required"
+                      : "Contact This Person"}
+                  </Button>
                 </div>
-
-                {/* Location */}
-                {employee.location && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span className="line-clamp-1">{employee.location}</span>
-                  </div>
-                )}
-
-                {/* LinkedIn Link */}
-                {employee.linkedinUrl && (
-                  <div className="flex items-center text-sm text-blue-600">
-                    <Linkedin className="h-4 w-4 mr-1" />
-                    <a
-                      href={employee.linkedinUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline line-clamp-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      View Profile
-                    </a>
-                  </div>
-                )}
-
-                {/* Credit Usage Info */}
-                {!isPremium && (
-                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                    Uses 1 credit for email address generation
-                  </div>
-                )}
-
-                {/* Contact Button */}
-                <Button
-                  className="w-full mt-4"
-                  size="sm"
-                  disabled={!isPremium && emailCreditsUsed >= maxFreeCredits}
-                >
-                  {!isPremium && emailCreditsUsed >= maxFreeCredits
-                    ? "Upgrade Required"
-                    : "Contact This Person"}
-                </Button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : (
         <EmptyEmployeesState onScrollToEmail={scrollToEmailGeneration} />
@@ -639,50 +675,91 @@ export default function EmployeesPage() {
           </div>
         )}
 
-        {/* Paste Input - highlighted longer */}
-        <textarea
-          value={linkedinContent}
-          onChange={handleLinkedinContentChange}
-          placeholder={
-            showLinkedInReminder
-              ? "Paste content here (Ctrl/⌘+V)"
-              : "Paste LinkedIn page content here..."
-          }
-          className={`w-full h-32 p-3 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 ${
-            showLinkedInReminder
-              ? "border-2 border-green-400 bg-green-50"
-              : "border border-gray-300"
-          }`}
-        />
+        {/* Enhanced Paste Input with Loading States */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">
+            Paste LinkedIn page content here:
+          </label>
 
-        <div className="flex space-x-2">
-          <Button onClick={handleLinkedInPaste} disabled={!linkedinContent.trim() || isLoading}>
-            {isLoading ? "Extracting..." : "Extract Employees"}
-          </Button>
+          <textarea
+            value={linkedinContent}
+            onChange={handleLinkedinContentChange}
+            disabled={isExtracting} // ✅ Disable during extraction
+            placeholder={
+              isExtracting
+                ? "Processing your LinkedIn content..."
+                : showLinkedInReminder
+                  ? "Paste content here (Ctrl/⌘+V)"
+                  : "Paste LinkedIn page content here..."
+            }
+            className={`w-full h-32 p-3 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
+              isExtracting
+                ? "bg-gray-100 cursor-not-allowed"
+                : showLinkedInReminder
+                  ? "border-2 border-green-400 bg-green-50"
+                  : "border border-gray-300"
+            }`}
+          />
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              setLinkedinContent("");
-              setShowLinkedinPaste(false);
-            }}
-          >
-            Clear
-          </Button>
+          {/* ✅ Progress Bar and Status - Show during extraction */}
+          {isExtracting && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center space-x-2 text-sm text-blue-700">
+                <Clock className="h-3 w-3" />
+                <span>{extractionStatus}</span>
+              </div>
+
+              <p className="text-xs text-blue-600">
+                Please wait while we analyze the LinkedIn content and extract employee information.
+              </p>
+            </div>
+          )}
+
+          <div className="flex space-x-2">
+            <Button
+              onClick={handleLinkedInPaste}
+              disabled={!linkedinContent.trim() || isExtracting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isExtracting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Extracting... ({Math.round(extractionProgress)}%)
+                </>
+              ) : (
+                "Extract Employees"
+              )}
+            </Button>
+
+            <Button
+              variant="outline"
+              disabled={isExtracting} // ✅ Disable clear during extraction
+              onClick={() => {
+                setLinkedinContent("");
+                setExtractionMessage("");
+                setExtractionError("");
+              }}
+            >
+              Clear
+            </Button>
+          </div>
         </div>
+
+        {/* Success/Error Messages */}
+        {extractionMessage && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm flex items-center">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+            {extractionMessage}
+          </div>
+        )}
+
+        {extractionError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-center">
+            <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
+            {extractionError}
+          </div>
+        )}
       </div>
-
-      {extractionMessage && (
-        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
-          {extractionMessage}
-        </div>
-      )}
-
-      {extractionError && (
-        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
-          {extractionError}
-        </div>
-      )}
     </div>
   );
 }

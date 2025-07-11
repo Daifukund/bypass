@@ -58,25 +58,32 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   // Silence PostHog network errors
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const originalError = console.error;
-      console.error = (...args) => {
-        const errorMessage = args[0]?.toString?.() || "";
+      // Intercept all window errors
+      window.addEventListener("error", (event) => {
+        const errorMessage = event.message || event.error?.message || "";
+        const source = event.filename || "";
 
-        const posthogErrors = [
-          "posthog",
-          "ERR_BLOCKED_BY_CLIENT",
-          "Failed to fetch",
-          "eu.i.posthog.com",
-        ];
+        const isPostHogError =
+          errorMessage.includes("Failed to fetch") &&
+          (source.includes("posthog") ||
+            source.includes("frame_ant") ||
+            source.includes("module.js"));
 
-        const isPostHogError = posthogErrors.some((error) =>
-          errorMessage.toLowerCase().includes(error.toLowerCase())
-        );
-
-        if (!isPostHogError) {
-          originalError(...args);
+        if (isPostHogError) {
+          event.preventDefault(); // Suppress the error
+          return false;
         }
-      };
+      });
+
+      // Also handle unhandled promise rejections
+      window.addEventListener("unhandledrejection", (event) => {
+        const errorMessage = event.reason?.message || String(event.reason);
+
+        if (errorMessage.includes("Failed to fetch") && errorMessage.includes("posthog")) {
+          event.preventDefault();
+          return false;
+        }
+      });
     }
   }, []);
 

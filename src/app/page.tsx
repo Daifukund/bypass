@@ -187,7 +187,7 @@ export default function LandingPage() {
       {/* Hero Section - Improved mobile spacing and text sizes */}
       <section className="px-4 sm:px-6 py-8 sm:py-12 lg:py-20 text-center max-w-4xl mx-auto">
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight px-2">
-          Get 3x More Interview Invitations by Bypassing Job Boards
+          Stop Getting Ghosted on Job Applications
         </h1>
         <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-6 text-gray-600 max-w-2xl mx-auto px-2">
           90% of job applications get ignored. We fix that.
@@ -198,7 +198,7 @@ export default function LandingPage() {
             onClick={() => handleSignupClick("hero")}
             className="bg-black text-white px-4 sm:px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center text-sm sm:text-base"
           >
-            Get Started – No Credit Card Required
+            Find Jobs in 5 Minutes
           </Link>
           <Link
             href="#demo"
