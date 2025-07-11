@@ -269,13 +269,19 @@ export default function EmployeesPage() {
         );
         setLinkedinContent("");
 
-        // Scroll to show new results
+        // ✅ UPDATED: Scroll to show the employees section at the top
         setTimeout(() => {
-          const aiSection = document.getElementById("ai-results");
-          if (aiSection) {
-            aiSection.scrollIntoView({
+          const employeesSection = document.getElementById("employees-section");
+          if (employeesSection) {
+            employeesSection.scrollIntoView({
               behavior: "smooth",
               block: "start",
+            });
+          } else {
+            // Fallback: scroll to top of page
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
             });
           }
         }, 500);
@@ -466,9 +472,9 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* ✅ Enhanced Employees Section with Beta Notice */}
+      {/* ✅ Enhanced Employees Section with Beta Notice and ID for scrolling */}
       {employees.length > 0 ? (
-        <div className="mb-8">
+        <div id="employees-section" className="mb-8">
           {/* Beta Notice for AI Results */}
           <div className="flex items-center space-x-2 mb-4">
             <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1">

@@ -386,7 +386,8 @@ function validateAndCleanEmployee(
   index: number,
   allEmployees: LinkedInEmployee[],
   searchJobTitle: string = "",
-  originalContent: string = ""
+  originalContent: string = "",
+  searchCriteriaLocation?: string // 🔧 NEW: Add search criteria location parameter
 ): LinkedInEmployee | null {
   console.log(`🔍 Validating employee ${index + 1}:`, emp);
 
@@ -405,9 +406,16 @@ function validateAndCleanEmployee(
     return null;
   }
 
-  // Parse and validate location
+  // 🔧 FIX: Use search criteria location first, then fallback to extracted location
   const rawLocation = emp.location || "";
-  const cleanLocation = parseLocation(rawLocation);
+  const extractedLocation = parseLocation(rawLocation);
+  const finalLocation = searchCriteriaLocation || extractedLocation || "Not specified";
+
+  console.log(`📍 Location handling for ${name}:`, {
+    searchCriteriaLocation,
+    extractedLocation,
+    finalLocation,
+  });
 
   // Extract LinkedIn URL
   const linkedinUrl =
@@ -434,17 +442,17 @@ function validateAndCleanEmployee(
     return null;
   }
 
-  // ✅ FIX: Remove null assignments and use undefined or empty string instead
+  // ✅ FIX: Use final location instead of cleanLocation
   const cleanedEmployee: LinkedInEmployee = {
     full_name: name.trim(),
     job_title: cleanTitle,
-    location: cleanLocation || "Not specified",
+    location: finalLocation, // 🔧 Use the prioritized location
     linkedin_url: linkedinUrl,
     relevance_score: relevanceScore,
     department: department,
     seniority_level: seniorityLevel,
-    years_at_company: yearsAtCompany || undefined, // ✅ FIX: Use undefined instead of null
-    profile_image: profileImage || undefined, // ✅ FIX: Use undefined instead of null
+    years_at_company: yearsAtCompany || undefined,
+    profile_image: profileImage || undefined,
   };
 
   console.log(`✅ Employee validated:`, cleanedEmployee);
@@ -638,7 +646,14 @@ export async function POST(req: NextRequest) {
       // Enhanced validation with duplicate detection and relevance scoring
       const validatedEmployees = rawEmployees
         .map((emp, index) =>
-          validateAndCleanEmployee(emp, index, rawEmployees, searchJobTitle, cleanedContent)
+          validateAndCleanEmployee(
+            emp,
+            index,
+            rawEmployees,
+            searchJobTitle,
+            cleanedContent,
+            body.location // 🔧 Pass search criteria location
+          )
         )
         .filter((emp): emp is LinkedInEmployee => emp !== null);
 
@@ -671,14 +686,13 @@ export async function POST(req: NextRequest) {
 
       // Transform for database insertion
       const employeesToInsert = newEmployees.map((emp: LinkedInEmployee) => {
-        // ✅ FIX: Ensure all required fields are properly typed
         const insertData = {
           id: crypto.randomUUID(),
           user_id: user.id,
           company_id: companyId,
           name: emp.full_name || "Unknown",
           title: emp.job_title || "Unknown",
-          location: emp.location || body.location || "Not specified",
+          location: emp.location || "Not specified", // 🔧 Simplified - location already handled in validation
           linkedinUrl: emp.linkedin_url || "",
           relevanceScore: emp.relevance_score || "Good Contact",
           source: "LinkedIn Paste",
